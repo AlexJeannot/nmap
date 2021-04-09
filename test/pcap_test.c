@@ -107,7 +107,7 @@ int main()
         printf("Device en0 opened\n");
 
     struct bpf_program fp;
-    char filter_exp[] = "port 44004";
+    char filter_exp[] = "port 80";
     bpf_u_int32 net = 0;
 
     if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {

@@ -32,7 +32,7 @@ int main()
     bzero(&packet, sizeof(packet));
 
     packet.th_sport = htons(44004);
-    packet.th_dport = htons(44005);
+    packet.th_dport = htons(80);
     packet.th_seq = 0;
     packet.th_ack = 0;
     packet.th_off = 5;

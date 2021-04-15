@@ -119,17 +119,30 @@ void addTarget(t_env *env, char *input)
     t_target        *n_target;
     t_target        *tmp;
     struct hostent  *host;
+    struct sockaddr_in addr;
 
     if (!(n_target = (t_target *)malloc(sizeof(t_target))))
         errorMsgExit("malloc [Target allocation]", input);
     bzero(n_target, sizeof(t_target));
 
-    if (inet_pton(AF_INET, input, &n_target->ip) < 1)
-    {
-        if (!(host = gethostbyname(input)))
-            errorMsgExit("ip adress or hostname", input);
-        memcpy(&n_target->ip, host->h_addr, sizeof(struct in_addr));
-    }
+    // if (inet_pton(AF_INET, input, &n_target->ip) < 1)
+    // {
+    if (!(host = gethostbyname(input)))
+        errorMsgExit("ip adress or hostname", input);
+    memcpy(&n_target->ip, host->h_addr, sizeof(struct in_addr));
+    // }
+
+    inet_ntop(AF_INET, &n_target->ip, &n_target->s_ip[0], INET_ADDRSTRLEN);
+    if (!(&n_target->s_ip[0]))
+        errorMsgExit("ip adress", "conversion from network format");
+
+    bzero(&addr, sizeof(addr));
+    addr.sin_family = AF_INET;
+    memcpy(&addr.sin_addr, &n_target->ip, sizeof(struct in_addr));
+    if (getnameinfo((struct sockaddr *)&addr, sizeof(addr), n_target->s_host, 255, NULL, 0, 0) != 0)
+        errorMsgExit("hostname", "reverse dns resolution");
+
+    printf("s_host = %s\n", n_target->s_host);
     if (!(env->l_target))
         env->l_target = n_target;
     else {

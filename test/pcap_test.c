@@ -20,7 +20,7 @@ void display_ip_header_info(struct ip *header)
     printf("header_size = %u\n", header->ip_hl);
     printf("dscp = %u\n", header->ip_tos & 0xfc);
     printf("ecn = %u\n", header->ip_tos & 0x3);
-    printf("packet_size = %u\n", header->ip_len);
+    printf("packet_size = %u\n", ntohs(header->ip_len));
     printf("id = %u\n", header->ip_id);
     printf("flags = %u\n", header->ip_off & 0xe000);
     printf("offset = %u\n", header->ip_off & 0x1fff);
@@ -129,6 +129,6 @@ int main()
 			     const u_char *); */
     pcap_loop(handle, 0, my_packet_handler, NULL);
     pcap_close(handle);
-    write(1, &header.comment[0], 256);
+    // write(1, &header.comment[0], 256);
     return (0);
 }

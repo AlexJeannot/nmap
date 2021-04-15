@@ -14,7 +14,7 @@ DSRCS		= ./srcs/
 DOBJS	= ./comp/
 
 # SOURCES
-SRCS =	parse.c nmap.c exit.c
+SRCS =	parse.c nmap.c exit.c sniffer.c tcp.c
 
 # OBJS
 OBJS 	= $(SRCS:%.c=$(DOBJS)%.o)  
@@ -29,7 +29,7 @@ all: $(NAME)
 
 # COMPILATION
 $(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(FLAGS) $(OBJS) -lpcap -o $(NAME)
 	echo "$(GREEN)$(NAME) DONE ✔$(RESET)"
 
 

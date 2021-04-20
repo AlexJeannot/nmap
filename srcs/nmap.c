@@ -39,24 +39,27 @@ int8_t pingTarget(t_env *env)
 {
     struct icmp icmp_header;
     struct tcphdr  tcp_header;
-    t_probe_info    info;
+    // t_probe_info    info;
 
     setHeader_ICMP(&icmp_header);
 
-    setProbeInfo(env, &info, SSYN);
-    setProbePort(&info, 80);
-    setHeader_TCP(&tcp_header, &info);
-    // setTargetPort(env, 80);
+    // setProbeInfo(env, &info, SSYN);
+    // setProbePort(&info, 80);
+    setHeader_TCP(env, &tcp_header, 80);
+    setTargetPort(&env->l_target->n_ip, 80);
+
+    printf("[PING] target port = %d\n", ntohs(((struct sockaddr_in *)&env->l_target->n_ip)->sin_port));
+
 
     env->scan.current = SPING;
     if (pthread_create(&env->sniffer_id, NULL, packetSniffer, (void *)env))
         errorMsgExit("sniffer thread creation", "ping");
 
     env->ping.ts_start = get_ts_ms();
-    if (sendto(env->sock.icmp, &icmp_header, sizeof(struct icmp), 0, &info.target, sizeof(struct sockaddr)) < 0)
+    if (sendto(env->sock.icmp, &icmp_header, sizeof(struct icmp), 0, &env->l_target->n_ip, sizeof(struct sockaddr)) < 0)
         errorMsgExit("sendto() call", "ICMP ping");
 
-    if (sendto(env->sock.tcp, &tcp_header, sizeof(struct tcphdr), 0, &info.target, sizeof(struct sockaddr)) < 0)
+    if (sendto(env->sock.tcp, &tcp_header, sizeof(struct tcphdr), 0, &env->l_target->n_ip, sizeof(struct sockaddr)) < 0)
         errorMsgExit("sendto() call", "TCP ping");
 
     alarm(1);
@@ -73,8 +76,8 @@ void scanTarget(t_env *env)
             env->scan.current = type;
             if (pthread_create(&env->sniffer_id, NULL, packetSniffer, (void *)env))
                 errorMsgExit("sniffer thread creation", "TCP scan");
-            
-            (type == SUDP) ? sendAllDatagram(env) : sendAllSegment(env, type);
+
+            (type == SUDP) ? sendAllDatagram(env) : sendAllSegment(env);
             alarm(1);
             pthread_join(env->sniffer_id, NULL);
         }
@@ -90,6 +93,9 @@ int main(int argc, char **argv)
     parseArgs(&env, argc, argv);
     getSourceIP(&env);
     createSocket(&env);
+
+    pthread_mutex_init(&env.port.lock, NULL);
+    pthread_mutex_init(&env.thread.lock, NULL);
 
     while (env.l_target) {
         if (pingTarget(&env)) {

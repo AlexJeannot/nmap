@@ -96,6 +96,10 @@ typedef struct  s_port {
     uint16_t    nb;
     uint16_t    list[1024];
     t_result    result[1024];
+
+    pthread_mutex_t lock;
+    uint16_t    index;
+
 }               t_port;
 
 typedef struct  s_socket
@@ -114,6 +118,7 @@ typedef struct s_thread
 {
     pthread_mutex_t lock;
     uint8_t         nb;
+    uint8_t         on;
 }               t_thread;
 
 typedef struct s_probe_info
@@ -159,14 +164,14 @@ long double	get_ts_ms(void);
 /*
 ** TCP.C
 */
-void setHeader_TCP(struct tcphdr *header, t_probe_info *info);
-void *sendSegment(void *input);
-void sendAllSegment(t_env *env, uint8_t type);
+void setHeader_TCP(t_env *env, struct tcphdr *header, uint16_t port);
+void sendSegment(t_env *env, uint16_t port);
+void sendAllSegment(t_env *env);
 
 /*
 ** UDP.C
 */
-void *sendDatagram(void *input);
+void sendDatagram(t_env *env, uint16_t port);
 void sendAllDatagram(t_env *env);
 
 /*
@@ -178,11 +183,14 @@ void setHeader_ICMP(struct icmp *header);
 ** NETWORK.C
 */
 void createSocket(t_env *env);
-void setTargetPort(t_env *env, uint16_t port);
+void setTargetPort(struct sockaddr *target, uint16_t port);
 void getSourceIP(t_env *env);
 
 void setProbeInfo(t_env *env, t_probe_info *info, uint8_t type);
 void setProbePort(t_probe_info *info, uint16_t port);
+
+int8_t getPortIndex(t_env *env);
+int16_t setPortIndex(t_env *env);
 
 uint16_t	calcul_checksum(void *data, int32_t size);
 uint16_t getMaxPort(const t_env *env);

@@ -1,16 +1,16 @@
 #include "../incs/nmap.h"
 
-void setHeader_UDP(struct udphdr *hdr, t_probe_info *info)
+void setHeader_UDP(t_env *env, struct udphdr *hdr, uint16_t port)
 {
     t_checksum chk;
 
     bzero(&chk, sizeof(t_checksum));
-    memcpy(&chk.s_addr, &info->intf_ip, sizeof(in_addr_t));
-    memcpy(&chk.t_addr, &((struct sockaddr_in *)&info->target)->sin_addr, sizeof(in_addr_t));
+    memcpy(&chk.s_addr, &env->intf.n_ip, sizeof(in_addr_t));
+    memcpy(&chk.t_addr, &env->l_target->ip, sizeof(in_addr_t));
     chk.type = IPPROTO_UDP;
     chk.length = htons((uint16_t)sizeof(struct udphdr)+ 14);
 
-    hdr->uh_dport = htons(info->port);
+    hdr->uh_dport = htons(port);
     hdr->uh_sport = htons(44380);
     hdr->uh_ulen = htons(22);
 
@@ -18,43 +18,67 @@ void setHeader_UDP(struct udphdr *hdr, t_probe_info *info)
     hdr->uh_sum = calcul_checksum(&chk, sizeof(struct udphdr) + CHKSM_PREHDR_LEN);
 }
 
-void *sendDatagram(void *input)
+void sendDatagram(t_env *env, uint16_t port)
 {
     struct udphdr udp_hdr;
     char data[22];
-    t_probe_info    *info;
 
-    info = (t_probe_info *)input;
-    setHeader_UDP(&udp_hdr, info);
+    setHeader_UDP(env, &udp_hdr, port);
+    setTargetPort(&env->l_target->n_ip, port);
+
     bzero(&data[0], 22);
     memcpy(&data[0], &udp_hdr, sizeof(struct udphdr));
-    if (sendto(info->sock, &data, 22, 0, &info->target, sizeof(struct sockaddr)) < 0)
+    if (sendto(env->sock.udp, &data, 22, 0, &env->l_target->n_ip, sizeof(struct sockaddr)) < 0)
         errorMsgExit("sendto() call", "UDP scan");
+}
 
-    if (info->is_thread)
-        pthread_exit((void*)0);
-    return ((void *)0);
+void *sendDatagram_Thread(void *input)
+{
+    struct udphdr udp_hdr;
+    char data[22];
+    struct sockaddr target;
+    int16_t         index;
+    t_env           *env;
+
+    env = (t_env *)input;
+    memcpy(&target, &env->l_target->n_ip, sizeof(struct sockaddr));
+
+    while (1) {
+        if ((index = setPortIndex(env)) == -1) {
+            incrementThreadPool(env);
+            pthread_exit((void *)0);
+        }
+
+        setTargetPort(&target, env->port.list[index]);
+        setHeader_UDP(env, &udp_hdr, env->port.list[index]);
+
+        bzero(&data[0], 22);
+        memcpy(&data[0], &udp_hdr, sizeof(struct udphdr));
+
+        if (sendto(env->sock.udp, &data, 22, 0, &target, sizeof(struct sockaddr)) < 0)
+            errorMsgExit("sendto() call", "UDP scan");
+    }
 }
 
 void sendAllDatagram(t_env *env)
 {
-    t_probe_info info;
     long double bef;
     long double after;
+    pthread_t id;
 
     bef = get_ts_ms();
-    setProbeInfo(env, &info, SUDP);
-    for (uint16_t pos = 0; pos < env->port.nb; pos++) {
-        setProbePort(&info, env->port.list[pos]);
-
-        if (isThreadAvailable(env))
-            sendDatagramByThread(info);
-        else
-            sendDatagram(&info);
-
-        // if (pos % 100 == 0)
-        //     usleep(100000);
+    if (env->thread.on) {
+        while (getPortIndex(env) && isThreadAvailable(env)) {
+            decrementThreadPool(env);
+            if (pthread_create(&id, NULL, sendDatagram_Thread, (void *)env))
+                errorMsgExit("sender thread creation", "TCP segment");
+        }
     }
+    else {
+        for (uint16_t pos = 0; pos < env->port.nb; pos++)
+            sendDatagram(env, env->port.list[pos]);
+    }
+
     after = get_ts_ms();
     printf("TIME = %LF ms\n", (after - bef));
 }

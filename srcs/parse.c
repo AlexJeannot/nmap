@@ -303,6 +303,9 @@ void parseArgs(t_env *env, int argc, char **argv)
         env->port.result[pos].udp = OPEN_FILT;
     }
 
+    if (isThreadAvailable(env))
+        env->thread.on = TRUE;
+
 
     // printf("=============\n");
     // for (uint16_t pos = 0; pos < env->port.nb; pos++) {

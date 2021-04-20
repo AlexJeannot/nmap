@@ -1,25 +1,25 @@
 #include "../incs/nmap.h"
 
-void setHeader_TCP(struct tcphdr *header, t_probe_info *info)
+void setHeader_TCP(t_env *env, struct tcphdr *header, uint16_t port)
 {
     t_checksum chk;
 
     bzero(&chk, sizeof(t_checksum));
-    memcpy(&chk.s_addr, &info->intf_ip, sizeof(in_addr_t));
-    memcpy(&chk.t_addr, &((struct sockaddr_in *)&info->target)->sin_addr, sizeof(in_addr_t));
+    memcpy(&chk.s_addr, &env->intf.n_ip, sizeof(in_addr_t));
+    memcpy(&chk.t_addr, &env->l_target->ip, sizeof(in_addr_t));
     chk.type = IPPROTO_TCP;
     chk.length = htons((uint16_t)sizeof(struct tcphdr));
 
     bzero(header, sizeof(struct tcphdr));
     header->th_sport = htons(44380);
-    header->th_dport = htons(info->port);
+    header->th_dport = htons(port);
     header->th_seq = 0; // TODO
     header->th_ack = 0;
     header->th_off = 5;
     header->th_win =  htons(1024);
     header->th_urp = 0;
 
-    switch (info->type) {
+    switch (env->scan.current) {
         case (SSYN):    header->th_flags = TH_SYN;                      break;
         case (SACK):    header->th_flags = TH_ACK;                      break;
         case (SNULL):   header->th_flags = 0;                           break;
@@ -31,45 +31,61 @@ void setHeader_TCP(struct tcphdr *header, t_probe_info *info)
     header->th_sum = calcul_checksum(&chk, sizeof(struct tcphdr) + CHKSM_PREHDR_LEN);
 }
 
-void *sendSegment(void *input)
+void sendSegment(t_env *env, uint16_t port)
 {
     struct tcphdr tcp_header;
-    t_probe_info    *info;
 
-    info = (t_probe_info *)input;
-    setHeader_TCP(&tcp_header, info);
-    printf("sendSegment tcp_header.dport = %d\n", ntohs(tcp_header.th_dport));
-    if (sendto(info->sock, &tcp_header, sizeof(struct tcphdr), 0, &info->target, sizeof(struct sockaddr)) < 0)
+    setHeader_TCP(env, &tcp_header, port);
+    setTargetPort(&env->l_target->n_ip, port);
+
+    if (sendto(env->sock.tcp, &tcp_header, sizeof(struct tcphdr), 0, &env->l_target->n_ip, sizeof(struct sockaddr)) < 0)
         errorMsgExit("sendto() call", "TCP scan");
-    
-    if (info->is_thread) {
-        pthread_exit((void*)0);
-    }
-    return ((void *)1);
 }
 
-void sendAllSegment(t_env *env, uint8_t type)
+void *sendSegment_Thread(void *input)
 {
-    t_probe_info info;
+    t_env           *env;
+    struct tcphdr   tcp_header;
+    struct sockaddr target;
+    int16_t         index;
+    
+    env = (t_env *)input;
+    memcpy(&target, &env->l_target->n_ip, sizeof(struct sockaddr));
+    while (1) {
+        if ((index = setPortIndex(env)) == -1) {
+            incrementThreadPool(env);
+            pthread_exit((void *)0);
+        }
+
+        setTargetPort(&target, env->port.list[index]);
+        setHeader_TCP(env, &tcp_header, env->port.list[index]);
+
+        if (sendto(env->sock.tcp, &tcp_header, sizeof(struct tcphdr), 0, &target, sizeof(struct sockaddr)) < 0)
+            errorMsgExit("sendto() call", "TCP scan");
+    }
+}
+
+void sendAllSegment(t_env *env)
+{
     long double bef;
     long double after;
+    pthread_t id;
+    // int32_t count = 0;
 
 
     bef = get_ts_ms();
-
-    setProbeInfo(env, &info, type);
-    for (uint16_t pos = 0; pos < env->port.nb; pos++) {
-        setProbePort(&info, env->port.list[pos]);
-
-        if (isThreadAvailable(env))
-            sendSegmentByThread(info);
-        else
-            sendSegment(&info);
-
-
-        // if (pos % 100 == 0)
-        //     usleep(100000);
+    if (env->thread.on) {
+        while (getPortIndex(env) && isThreadAvailable(env)) {
+            decrementThreadPool(env);
+            if (pthread_create(&id, NULL, sendSegment_Thread, (void *)env))
+                errorMsgExit("sender thread creation", "TCP segment");
+        }
     }
+    else {
+        for (uint16_t pos = 0; pos < env->port.nb; pos++)
+            sendSegment(env, env->port.list[pos]);
+    }
+
     after = get_ts_ms();
     printf("TIME = %LF ms\n", (after - bef));
 }

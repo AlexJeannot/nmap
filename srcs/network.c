@@ -13,8 +13,9 @@ void createSocket(t_env *env)
     }
 }   
 
-void setTargetPort(t_env *env, uint16_t port) {
-    ((struct sockaddr_in *)&env->l_target->n_ip)->sin_port = htons(port);
+void setTargetPort(struct sockaddr *target, uint16_t port)
+{
+    ((struct sockaddr_in *)target)->sin_port = htons(port);
 }
 
 void getSourceIP(t_env *env)
@@ -82,6 +83,27 @@ uint16_t getMaxPort(const t_env *env)
             max = env->port.list[pos];
     }
     return (max);
+}
+
+int8_t getPortIndex(t_env *env)
+{
+    uint8_t res;
+
+    pthread_mutex_lock(&env->port.lock);
+    res = (env->port.index < env->port.nb) ? TRUE : FALSE;
+    pthread_mutex_unlock(&env->port.lock);
+    return (res);
+}
+
+int16_t setPortIndex(t_env *env)
+{
+    int16_t res;
+
+    pthread_mutex_lock(&env->port.lock);
+    res = (env->port.index < env->port.nb) ? env->port.index : -1;
+    env->port.index++;
+    pthread_mutex_unlock(&env->port.lock);
+    return (res);
 }
 
 /*

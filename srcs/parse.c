@@ -36,14 +36,14 @@ void controlPort(char *input, int32_t port)
 uint32_t addPort(t_env *env, char *input, int32_t port, uint8_t type)
 {
     controlPort(input, port);
-    for (uint16_t pos = 0; pos < env->nb_port; pos++) {
-        if (env->port_list[pos] == (uint16_t)port)
+    for (uint16_t pos = 0; pos < env->port.nb; pos++) {
+        if (env->port.list[pos] == (uint16_t)port)
             return (type);
     }
-    if (env->nb_port >= 1024)
+    if (env->port.nb >= 1024)
         errorMsgExit("--port [Number of ports requested exceed 1024]", input);
-    env->port_list[env->nb_port] = (uint16_t)port;
-    env->nb_port++;
+    env->port.list[env->port.nb] = (uint16_t)port;
+    env->port.nb++;
     return (type);
 }
 
@@ -116,40 +116,40 @@ void parsePorts(t_env *env, char *input)
 
 void addTarget(t_env *env, char *input)
 {
-    t_target        *n_target;
+    t_target        *target;
     t_target        *tmp;
     struct hostent  *host;
     struct sockaddr_in addr;
 
-    if (!(n_target = (t_target *)malloc(sizeof(t_target))))
+    if (!(target = (t_target *)malloc(sizeof(t_target))))
         errorMsgExit("malloc [Target allocation]", input);
-    bzero(n_target, sizeof(t_target));
+    bzero(target, sizeof(t_target));
 
-    // if (inet_pton(AF_INET, input, &n_target->ip) < 1)
-    // {
     if (!(host = gethostbyname(input)))
         errorMsgExit("ip adress or hostname", input);
-    memcpy(&n_target->ip, host->h_addr, sizeof(struct in_addr));
-    // }
+    memcpy(&target->ip, host->h_addr, sizeof(struct in_addr));
+    ((struct sockaddr_in *)&target->n_ip)->sin_family = AF_INET;
+    memcpy(&((struct sockaddr_in *)&target->n_ip)->sin_addr, host->h_addr, sizeof(struct in_addr));
 
-    inet_ntop(AF_INET, &n_target->ip, &n_target->s_ip[0], INET_ADDRSTRLEN);
-    if (!(&n_target->s_ip[0]))
+
+    inet_ntop(AF_INET, &target->ip, &target->s_ip[0], INET_ADDRSTRLEN);
+    if (!(&target->s_ip[0]))
         errorMsgExit("ip adress", "conversion from network format");
 
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    memcpy(&addr.sin_addr, &n_target->ip, sizeof(struct in_addr));
-    if (getnameinfo((struct sockaddr *)&addr, sizeof(addr), n_target->s_host, 255, NULL, 0, 0) != 0)
+    memcpy(&addr.sin_addr, &target->ip, sizeof(struct in_addr));
+    if (getnameinfo((struct sockaddr *)&addr, sizeof(addr), target->s_host, 255, NULL, 0, 0) != 0)
         errorMsgExit("hostname", "reverse dns resolution");
 
-    printf("s_host = %s\n", n_target->s_host);
+    printf("s_host = %s\n", target->s_host);
     if (!(env->l_target))
-        env->l_target = n_target;
+        env->l_target = target;
     else {
         tmp = env->l_target;
         while (tmp->next)
             tmp = tmp->next;
-        tmp->next = n_target;
+        tmp->next = target;
     }
 }
 
@@ -193,16 +193,16 @@ void parseThreads(t_env *env, char *input)
     if (!(input))
         errorMsgExit("--speedup", "No thread number provided");
     thread_nb = atoi(input);
-    if (thread_nb < 1 || thread_nb > 250)
+    if (thread_nb < 0 || thread_nb > 250)
         errorMsgExit("--speedup [Wrong number of threads]", input);
-    env->thread_nb = (uint8_t)thread_nb;
+    env->thread.nb = (uint8_t)thread_nb;
 }
 
 void addScanType(t_env *env, char *input, uint8_t type)
 {
-    if (env->scan_type & type)
+    if (env->scan.all & type)
         errorMsgExit("--scan [Scan type repetition]", input);
-    env->scan_type |= type;
+    env->scan.all |= type;
 }
 
 uint32_t controlAfterScanType(char *input, char current_char, char next_char)
@@ -249,7 +249,7 @@ void parseScan(t_env *env, char *input)
         fpos = controlAfterScanType(input, input[spos], input[spos + 1]) + spos;
     }
     // for (int count = 7; count >= 0; count--)
-    //     printf("%d", ((env->scan_type >> count) & 1));
+    //     printf("%d", ((env->scan.all >> count) & 1));
     // printf("\n");
     
 }
@@ -288,23 +288,27 @@ void parseArgs(t_env *env, int argc, char **argv)
 
     if (!(env->l_target))
         errorMsgExit("ip address or hostname", "no target provided");
-    if (env->nb_port == 0)
+    if (env->port.nb == 0)
         addPortRange(env, "default", 1, 1024);
 
-    if (env->scan_type == 0)
+    if (env->scan.all == 0)
         parseScan(env, "SYN/ACK/NULL/FIN/XMAS/UDP");
 
-
-
-
-
-
-
-    printf("=============\n");
-    for (uint16_t pos = 0; pos < env->nb_port; pos++) {
-        printf("%d\n", env->port_list[pos]);
+    for (uint16_t pos = 0; pos < env->port.nb; pos++) {
+        env->port.result[pos].syn = FILT;
+        env->port.result[pos].ack = FILT;
+        env->port.result[pos].null = OPEN_FILT;
+        env->port.result[pos].fin = OPEN_FILT;
+        env->port.result[pos].xmas = OPEN_FILT;
+        env->port.result[pos].udp = OPEN_FILT;
     }
-    printf("=============\n");
+
+
+    // printf("=============\n");
+    // for (uint16_t pos = 0; pos < env->port.nb; pos++) {
+    //     printf("%d\n", env->port.list[pos]);
+    // }
+    // printf("=============\n");
 
     t_target *tmp;
     char ip[INET_ADDRSTRLEN];
@@ -319,7 +323,7 @@ void parseArgs(t_env *env, int argc, char **argv)
     printf("=============\n");
 
     for (int count = 7; count >= 0; count--)
-        printf("%d", ((env->scan_type >> count) & 1));
+        printf("%d", ((env->scan.all >> count) & 1));
     printf("\n");
     printf("=============\n");
 }

@@ -10,6 +10,7 @@ void setHeader_UDP(t_env *env, struct udphdr *hdr, uint16_t port)
     chk.type = IPPROTO_UDP;
     chk.length = htons((uint16_t)sizeof(struct udphdr)+ 14);
 
+    bzero(hdr, sizeof(struct udphdr));
     hdr->uh_dport = htons(port);
     hdr->uh_sport = htons(44380);
     hdr->uh_ulen = htons(22);
@@ -23,8 +24,10 @@ void sendDatagram(t_env *env, uint16_t port)
     struct udphdr udp_hdr;
     char data[22];
 
-    setHeader_UDP(env, &udp_hdr, port);
     setTargetPort(&env->l_target->n_ip, port);
+    setHeader_UDP(env, &udp_hdr, port);
+    printf("[%d] CHECKSUM = %x\n", port, udp_hdr.uh_sum);
+
 
     bzero(&data[0], 22);
     memcpy(&data[0], &udp_hdr, sizeof(struct udphdr));
@@ -75,8 +78,12 @@ void sendAllDatagram(t_env *env)
         }
     }
     else {
-        for (uint16_t pos = 0; pos < env->port.nb; pos++)
+        for (uint16_t pos = 0; pos < env->port.nb; pos++) {
+
             sendDatagram(env, env->port.list[pos]);
+            if (pos && pos % 5 == 0)
+                usleep(1000001);
+        }
     }
 
     after = get_ts_ms();

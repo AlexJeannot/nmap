@@ -85,26 +85,26 @@ uint16_t getMaxPort(const t_env *env)
     return (max);
 }
 
-int8_t getPortIndex(t_env *env)
-{
-    uint8_t res;
+// int8_t getPortIndex(t_env *env)
+// {
+//     uint8_t res;
 
-    pthread_mutex_lock(&env->port.lock);
-    res = (env->port.index < env->port.nb) ? TRUE : FALSE;
-    pthread_mutex_unlock(&env->port.lock);
-    return (res);
-}
+//     pthread_mutex_lock(&env->port.lock);
+//     res = (env->port.index < env->port.nb) ? TRUE : FALSE;
+//     pthread_mutex_unlock(&env->port.lock);
+//     return (res);
+// }
 
-int16_t setPortIndex(t_env *env)
-{
-    int16_t res;
+// int16_t setPortIndex(t_env *env)
+// {
+//     int16_t res;
 
-    pthread_mutex_lock(&env->port.lock);
-    res = (env->port.index < env->port.nb) ? env->port.index : -1;
-    env->port.index++;
-    pthread_mutex_unlock(&env->port.lock);
-    return (res);
-}
+//     pthread_mutex_lock(&env->port.lock);
+//     res = (env->port.index < env->port.nb) ? env->port.index : -1;
+//     env->port.index++;
+//     pthread_mutex_unlock(&env->port.lock);
+//     return (res);
+// }
 
 /*
  * Checksum calculation

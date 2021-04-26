@@ -74,13 +74,17 @@ typedef struct s_target
     char            s_host[256];
     struct sockaddr n_ip;
     struct s_target *next;
+    pcap_t *p_handle;
+    pcap_t *s_handle;
 }   t_target;
 
 typedef struct s_ping {
     long double ts_start;
     long double ts_end;
+    pthread_mutex_t lock;
     uint8_t     imcp_r;
     uint8_t     tcp_r;
+    pcap_t *handle;
 }   t_ping;
 
 typedef struct  s_result {
@@ -98,7 +102,7 @@ typedef struct  s_port {
     t_result    result[1024];
 
     pthread_mutex_t lock;
-    uint16_t    index;
+    // uint16_t    index;
 
 }               t_port;
 
@@ -117,7 +121,7 @@ typedef struct s_scan {
 typedef struct s_thread
 {
     pthread_mutex_t lock;
-    uint8_t         nb;
+    uint8_t         *nb;
     uint8_t         on;
 }               t_thread;
 
@@ -135,6 +139,7 @@ typedef struct s_env {
 
     t_port      port;
     t_target    *l_target;
+    uint64_t    nb_target;
 
     // uint8_t     thread_nb;
     t_thread    thread;
@@ -145,34 +150,39 @@ typedef struct s_env {
     char        test[10];
     t_ping      ping;
 
-    // uint8_t     scan_type;
-    // uint8_t     s_type;
     t_scan      scan;
 
     t_interface intf;
     t_socket    sock;
     pthread_t   sniffer_id;
+    pthread_mutex_t sniffer_lock;
+    uint8_t sniffer_ready;
+    uint8_t sniffer_end;
+    pcap_t *handle;
 } t_env;
 
 t_sig_info siginfo;
 
-void *packetSniffer(void *env);
-void parseArgs(t_env *env, int argc, char **argv);
+void *packetSniffer(void *input);
+void parseArgs(t_env *env, t_target **all_target, int argc, char **argv);
 void	errorMsgExit(char *option, char *arg);
 long double	get_ts_ms(void);
+// void waitForReponse(pthread_t id);
+void waitForReponse(t_env *env);
+void waitForReponse_thread(t_env *main_env, t_env *all_env);
 
 /*
 ** TCP.C
 */
 void setHeader_TCP(t_env *env, struct tcphdr *header, uint16_t port);
-void sendSegment(t_env *env, uint16_t port);
-void sendAllSegment(t_env *env);
+void sendSegment(t_env *env);
+// void sendAllSegment(t_env *env);
 
 /*
 ** UDP.C
 */
-void sendDatagram(t_env *env, uint16_t port);
-void sendAllDatagram(t_env *env);
+void sendDatagram(t_env *env);
+// void sendAllDatagram(t_env *env);
 
 /*
 ** ICMP.C

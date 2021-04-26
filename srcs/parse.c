@@ -114,19 +114,42 @@ void parsePorts(t_env *env, char *input)
     }
 }
 
-void addTarget(t_env *env, char *input)
+uint8_t isHostDuplicate(t_target **all_target, struct hostent *host)
+{
+    t_target *tmp;
+    int ret;
+
+    tmp = *all_target;
+    while (tmp) {
+        if ((ret = memcmp(&tmp->ip, host->h_addr, sizeof(in_addr_t))) == 0)
+            return (TRUE);
+        printf("ret memcmp = %d\n", ret);
+        tmp = tmp->next;
+    }
+    return (FALSE);
+}
+
+void addTarget(t_env *env, t_target **all_target, char *input)
 {
     t_target        *target;
     t_target        *tmp;
     struct hostent  *host;
     struct sockaddr_in addr;
 
-    if (!(target = (t_target *)malloc(sizeof(t_target))))
-        errorMsgExit("malloc [Target allocation]", input);
-    bzero(target, sizeof(t_target));
 
+    printf("========== ============ ============= ============\n");
     if (!(host = gethostbyname(input)))
         errorMsgExit("ip adress or hostname", input);
+    if (isHostDuplicate(all_target, host)) {
+        printf("--------------------------> %s is not unique\n", input);
+        return ;
+    }
+
+    if (!(target = (t_target *)malloc(sizeof(t_target))))
+        errorMsgExit("malloc [Target allocation]", input);
+
+    bzero(target, sizeof(t_target));
+
     memcpy(&target->ip, host->h_addr, sizeof(struct in_addr));
     ((struct sockaddr_in *)&target->n_ip)->sin_family = AF_INET;
     memcpy(&((struct sockaddr_in *)&target->n_ip)->sin_addr, host->h_addr, sizeof(struct in_addr));
@@ -142,27 +165,29 @@ void addTarget(t_env *env, char *input)
     if (getnameinfo((struct sockaddr *)&addr, sizeof(addr), target->s_host, 255, NULL, 0, 0) != 0)
         errorMsgExit("hostname", "reverse dns resolution");
 
+    env->nb_target++;
     printf("s_host = %s\n", target->s_host);
-    if (!(env->l_target))
-        env->l_target = target;
+    if (!(*all_target))
+        *all_target = target;
     else {
-        tmp = env->l_target;
+        tmp = *all_target;
         while (tmp->next)
             tmp = tmp->next;
         tmp->next = target;
     }
+    printf("[addTarget] all_target addr = %p\n", *all_target);
 }
 
-void parseIP(t_env *env, char *input)
+void parseIP(t_env *env, t_target **all_target, char *input)
 {
     printf("parseIP input = %s\n", input);
 
     if (!(input))
         errorMsgExit("--ip", "No ip address provided");
-    addTarget(env, input);
+    addTarget(env, all_target, input);
 }
 
-void parseFile(t_env *env, char *input)
+void parseFile(t_env *env, t_target **all_target, char *input)
 {
     printf("parseFile value = %s\n", input);
     FILE *file;
@@ -178,7 +203,7 @@ void parseFile(t_env *env, char *input)
     line = NULL;
     while ((ret = getline(&line, &len, file)) != -1) {
         line[ret - 1] = '\0';
-        addTarget(env, line);
+        addTarget(env, all_target, line);
     }
     fclose(file);
     if (line)
@@ -190,12 +215,15 @@ void parseThreads(t_env *env, char *input)
     printf("parseThreads thread_nb = %s\n", input);
     int32_t thread_nb;
 
+    if (!(env->thread.nb = (uint8_t *)malloc(sizeof(uint8_t))))
+        errorMsgExit("malloc [Thread number allocation]", input);
+    printf(">>>>>>>>>>>> (env->thread.nb) = %p\n", (env->thread.nb));
     if (!(input))
         errorMsgExit("--speedup", "No thread number provided");
     thread_nb = atoi(input);
     if (thread_nb < 0 || thread_nb > 250)
         errorMsgExit("--speedup [Wrong number of threads]", input);
-    env->thread.nb = (uint8_t)thread_nb;
+    *(env->thread.nb) = (uint8_t)thread_nb;
 }
 
 void addScanType(t_env *env, char *input, uint8_t type)
@@ -254,16 +282,16 @@ void parseScan(t_env *env, char *input)
     
 }
 
-int8_t parseOption(t_env *env, char *arg, char *next_arg)
+int8_t parseOption(t_env *env, t_target **all_target, char *arg, char *next_arg)
 {
     if (!(strncmp(arg, "help", 5)))
         displayHelp(0);
     else if (!(strncmp(arg, "ports", 6)))
         parsePorts(env, next_arg);
     else if (!(strncmp(arg, "ip", 3)))
-        parseIP(env, next_arg);
+        parseIP(env, all_target, next_arg);
     else if (!(strncmp(arg, "file", 5)))
-        parseFile(env, next_arg);
+        parseFile(env, all_target, next_arg);
     else if (!(strncmp(arg, "speedup", 8)))
         parseThreads(env, next_arg);
     else if (!(strncmp(arg, "scan", 5)))
@@ -272,22 +300,25 @@ int8_t parseOption(t_env *env, char *arg, char *next_arg)
     return (1);
 }
 
-void parseArgs(t_env *env, int argc, char **argv)
+void parseArgs(t_env *env, t_target **all_target, int argc, char **argv)
 {
     int16_t	pos;
 
+    printf("[parseArgs start] all_target addr = %p\n", *all_target);
     pos = 1;
     if (argc < 2)
         displayHelp(1);
     while (pos < argc)
     {
         if (isOption(argv[pos]))
-            pos += parseOption(env, &(argv[pos][2]), argv[pos + 1]);
+            pos += parseOption(env, all_target, &(argv[pos][2]), argv[pos + 1]);
         pos++;
     }
 
-    if (!(env->l_target))
+    printf("[parseArgs end] all_target addr = %p\n", *all_target);
+    if (!(*all_target))
         errorMsgExit("ip address or hostname", "no target provided");
+    printf("POST VALID TARGET PARSE\n");
     if (env->port.nb == 0)
         addPortRange(env, "default", 1, 1024);
 
@@ -303,9 +334,12 @@ void parseArgs(t_env *env, int argc, char **argv)
         env->port.result[pos].udp = OPEN_FILT;
     }
 
-    if (isThreadAvailable(env))
+    printf("PRE VALID THREAD ON PARSE\n");
+    if (env->thread.nb && isThreadAvailable(env))
         env->thread.on = TRUE;
-
+    if (env->thread.nb)
+        printf("*(env->thread.nb) = %d\n", *(env->thread.nb));
+    printf("POST VALID PARSE\n");
 
     // printf("=============\n");
     // for (uint16_t pos = 0; pos < env->port.nb; pos++) {
@@ -315,7 +349,7 @@ void parseArgs(t_env *env, int argc, char **argv)
 
     t_target *tmp;
     char ip[INET_ADDRSTRLEN];
-    tmp = env->l_target;
+    tmp = *all_target;
     while (tmp) {
         bzero(&ip, INET_ADDRSTRLEN);
         inet_ntop(AF_INET, &tmp->ip, &ip[0], INET_ADDRSTRLEN);

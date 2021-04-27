@@ -28,7 +28,7 @@ void portError(char *str)
 void controlPort(char *input, int32_t port)
 {
     if (port < 1 || port > 65535) {
-        printf("port = %d\n", port);
+        // printf("port = %d\n", port);
         errorMsgExit("--port [Wrong port number]", input);
     }
 }
@@ -84,7 +84,7 @@ uint32_t controlAfterPortRange(char *input, char next_char)
 
 void parsePorts(t_env *env, char *input)
 {
-    printf("parsePorts input = %s\n", input);
+    // printf("parsePorts input = %s\n", input);
     uint32_t    fpos, spos;
 
     fpos = 0;
@@ -123,7 +123,7 @@ uint8_t isHostDuplicate(t_target **all_target, struct hostent *host)
     while (tmp) {
         if ((ret = memcmp(&tmp->ip, host->h_addr, sizeof(in_addr_t))) == 0)
             return (TRUE);
-        printf("ret memcmp = %d\n", ret);
+        // printf("ret memcmp = %d\n", ret);
         tmp = tmp->next;
     }
     return (FALSE);
@@ -137,11 +137,11 @@ void addTarget(t_env *env, t_target **all_target, char *input)
     struct sockaddr_in addr;
 
 
-    printf("========== ============ ============= ============\n");
+    // printf("========== ============ ============= ============\n");
     if (!(host = gethostbyname(input)))
         errorMsgExit("ip adress or hostname", input);
     if (isHostDuplicate(all_target, host)) {
-        printf("--------------------------> %s is not unique\n", input);
+        // printf("--------------------------> %s is not unique\n", input);
         return ;
     }
 
@@ -175,7 +175,7 @@ void addTarget(t_env *env, t_target **all_target, char *input)
             tmp = tmp->next;
         tmp->next = target;
     }
-    printf("[addTarget] all_target addr = %p\n", *all_target);
+    // printf("[addTarget] all_target addr = %p\n", *all_target);
 }
 
 void parseIP(t_env *env, t_target **all_target, char *input)
@@ -189,7 +189,7 @@ void parseIP(t_env *env, t_target **all_target, char *input)
 
 void parseFile(t_env *env, t_target **all_target, char *input)
 {
-    printf("parseFile value = %s\n", input);
+    // printf("parseFile value = %s\n", input);
     FILE *file;
     char *line;
     size_t len;
@@ -212,12 +212,12 @@ void parseFile(t_env *env, t_target **all_target, char *input)
 
 void parseThreads(t_env *env, char *input)
 {
-    printf("parseThreads thread_nb = %s\n", input);
+    // printf("parseThreads thread_nb = %s\n", input);
     int32_t thread_nb;
 
     if (!(env->thread.nb = (uint8_t *)malloc(sizeof(uint8_t))))
         errorMsgExit("malloc [Thread number allocation]", input);
-    printf(">>>>>>>>>>>> (env->thread.nb) = %p\n", (env->thread.nb));
+    // printf(">>>>>>>>>>>> (env->thread.nb) = %p\n", (env->thread.nb));
     if (!(input))
         errorMsgExit("--speedup", "No thread number provided");
     thread_nb = atoi(input);
@@ -246,7 +246,7 @@ uint32_t controlAfterScanType(char *input, char current_char, char next_char)
 
 void parseScan(t_env *env, char *input)
 {
-    printf("parseScan value = %s\n", input);
+    // printf("parseScan value = %s\n", input);
     uint32_t    fpos, spos, tpos;
     char        type[5];
 
@@ -304,7 +304,7 @@ void parseArgs(t_env *env, t_target **all_target, int argc, char **argv)
 {
     int16_t	pos;
 
-    printf("[parseArgs start] all_target addr = %p\n", *all_target);
+    // printf("[parseArgs start] all_target addr = %p\n", *all_target);
     pos = 1;
     if (argc < 2)
         displayHelp(1);
@@ -315,10 +315,10 @@ void parseArgs(t_env *env, t_target **all_target, int argc, char **argv)
         pos++;
     }
 
-    printf("[parseArgs end] all_target addr = %p\n", *all_target);
+    // printf("[parseArgs end] all_target addr = %p\n", *all_target);
     if (!(*all_target))
         errorMsgExit("ip address or hostname", "no target provided");
-    printf("POST VALID TARGET PARSE\n");
+    // printf("POST VALID TARGET PARSE\n");
     if (env->port.nb == 0)
         addPortRange(env, "default", 1, 1024);
 
@@ -334,12 +334,12 @@ void parseArgs(t_env *env, t_target **all_target, int argc, char **argv)
         env->port.result[pos].udp = OPEN_FILT;
     }
 
-    printf("PRE VALID THREAD ON PARSE\n");
+    // printf("PRE VALID THREAD ON PARSE\n");
     if (env->thread.nb && isThreadAvailable(env))
         env->thread.on = TRUE;
-    if (env->thread.nb)
-        printf("*(env->thread.nb) = %d\n", *(env->thread.nb));
-    printf("POST VALID PARSE\n");
+    // if (env->thread.nb)
+        // printf("*(env->thread.nb) = %d\n", *(env->thread.nb));
+    // printf("POST VALID PARSE\n");
 
     // printf("=============\n");
     // for (uint16_t pos = 0; pos < env->port.nb; pos++) {

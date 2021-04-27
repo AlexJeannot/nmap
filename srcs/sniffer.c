@@ -31,16 +31,11 @@ int16_t  isPortFromScan(const t_env *env, uint16_t port)
 
 void handleResponse_ping(t_env *env, struct ip *ip_hdr)
 {
-    printf("\033[38;5;99m========================      %s      =====================================\n", env->l_target->s_host);
-    display_ip_header_info(ip_hdr);
-    printf("=============================================================\n\033[0m");
-
     if (ip_hdr->ip_p == IPPROTO_ICMP || ip_hdr->ip_p == IPPROTO_TCP) {
         switch (ip_hdr->ip_p) {
             case (IPPROTO_ICMP):    env->ping.imcp_r = 1;   break;
             case (IPPROTO_TCP):    env->ping.tcp_r = 1;     break;
         }
-        env->ping.ts_end = get_ts_ms();
         pcap_breakloop(env->l_target->p_handle);
     }
     else 
@@ -51,12 +46,8 @@ void handleReponse_UDP(t_env *env, struct udphdr *udp_hdr)
 {
     int16_t        index;
 
-    printf("UDP FCT SRC PORT = %d\n", ntohs(udp_hdr->uh_sport));
-    printf("UDP FCT DEST PORT = %d\n", ntohs(udp_hdr->uh_dport));
-
     if ((index = isPortFromScan(env, ntohs(udp_hdr->uh_sport))) == -1 || ntohs(udp_hdr->uh_dport) != 44380)
         return ;
-
     env->port.result[index].udp = OPEN;
 }
 
@@ -77,7 +68,7 @@ void handleResponse_TCP(t_env *env, struct tcphdr *tcp_hdr)
 {
     int16_t        index;
 
-    printf("\033[38;5;30mTCP RESPONSE\n\033[0m");
+    // printf("\033[38;5;30mTCP RESPONSE\n\033[0m");
     if ((index = isPortFromScan(env, ntohs(tcp_hdr->th_sport))) == -1 || ntohs(tcp_hdr->th_dport) != 44380)
         return ;
 
@@ -119,18 +110,14 @@ void handleResponse_ICMP(t_env *env, const u_char *packet, struct icmp *icmp_hdr
     offset = getEncapDataOffset(packet);
     if (env->scan.current == SUDP) {
         udp_hdr = (struct udphdr *)&packet[offset];
-        printf("[ICMP] PORT UDP SRC = %d\n", ntohs(udp_hdr->uh_sport));
-        printf("[ICMP] PORT UDP DST = %d\n", ntohs(udp_hdr->uh_dport));
         if ((index = isPortFromScan(env, ntohs(udp_hdr->uh_dport))) == -1 || ntohs(udp_hdr->uh_sport) != 44380)
             return ;
-        printf("index = %d\n", index);
         if (isHostUnreachable(icmp_hdr)) {
             if (icmp_hdr->icmp_code == 3)
                 env->port.result[index].udp = CLOSED;
             else
                 env->port.result[index].udp = FILT;
         }
-        printf("env->port.result[index].udp = %d\n", env->port.result[index].udp);
     }
     else {
         tcp_hdr = (struct tcphdr *)&packet[offset];
@@ -152,7 +139,7 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
     // printf("-----------------------------\n");
     // printf("TOTAL Packet with length of [%d]\n", header->len);
     // printf("CAPTURE Packet with length of [%d]\n", header->caplen);
-    printf("IN LOOP\n");
+    // printf("IN LOOP\n");
     
     (void)header;
     t_env *env;
@@ -186,19 +173,19 @@ void setFilter(t_env *env)
     if (env->scan.current == SPING) {
         sprintf(&filter[0], "src host %s && (tcp src port 80 || icmp[icmptype] == icmp-echoreply)", env->l_target->s_ip);
         // sprintf(&filter[0], "(tcp src port 80 || icmp[icmptype] == icmp-echoreply)");
-        printf("FILTER PING = %s\n", filter);
+        // printf("FILTER PING = %s\n", filter);
     }
     else if (env->scan.current == SUDP) {
         sprintf(&filter[0], "src host %s", env->l_target->s_ip);
         sprintf(&filter[strlen(filter)], " && (udp src portrange %d-%d ", getMinPort(env), getMaxPort(env));
         sprintf(&filter[strlen(filter)], " || icmp[icmptype] == icmp-unreach)");
-        printf("FILTER UDP = %s\n", filter);
+        // printf("FILTER UDP = %s\n", filter);
     }
     else {
         sprintf(&filter[0], "src host %s", env->l_target->s_ip);
         sprintf(&filter[strlen(filter)], " && (tcp src portrange %d-%d ", getMinPort(env), getMaxPort(env));
         sprintf(&filter[strlen(filter)], " || icmp[icmptype] == icmp-unreach)");
-        printf("FILTER TCP = %s\n", filter);
+        // printf("FILTER TCP = %s\n", filter);
     }
 
     if (pcap_compile(*handle, &fp, filter, 0, PCAP_NETMASK_UNKNOWN) == -1)
@@ -223,17 +210,17 @@ void setupCapture(t_env *env)
     if (!(dlist->name))
         errorMsgExit("pcap device name", "no name found");
 
-    printf("timer = %d\n", timer);
+    // printf("timer = %d\n", timer);
     if (!(*handle = pcap_open_live(dlist->name, BUFSIZ, 1, timer, errbuf)))
         errorMsgExit("pcap device opening", errbuf);
 }
 
-void signal_handler_thread(int code)
-{
-    if (code == SIGALRM) {
-        // pcap_breakloop(env->handle);
-    }
-}
+// void signal_handler_thread(int code)
+// {
+//     if (code == SIGALRM) {
+//         // pcap_breakloop(env->handle);
+//     }
+// }
 
 void *packetSniffer(void *input)
 {
@@ -243,26 +230,27 @@ void *packetSniffer(void *input)
     env = (t_env *)input;
     (env->scan.current == SPING) ? setupCapture(env) : setupCapture(env);
     (env->scan.current == SPING) ? setFilter(env) : setFilter(env);
-    printf("BEFORE LOOP type = %d\n", env->scan.current);
+    // printf("BEFORE LOOP type = %d\n", env->scan.current);
 
-    
-    pthread_mutex_lock(&env->sniffer_lock);
-    env->sniffer_ready = TRUE;
-    pthread_mutex_unlock(&env->sniffer_lock);
+
+    // pthread_mutex_lock(&env->sniffer_lock);
+    // env->sniffer_ready = TRUE;
+    // pthread_mutex_unlock(&env->sniffer_lock);
+    setSnifferState(env, &env->sniffer_ready, TRUE);
 
 
     if (env->scan.current == SPING)
         ret = pcap_dispatch(env->l_target->p_handle, -1, my_packet_handler, (void *)env);
     else
         while ((ret = pcap_dispatch(env->l_target->s_handle, 0, my_packet_handler, (void *)env)) != -2) ;
-    printf("ret = %d\n", ret);
-    printf("AFTER LOOP\n");
+    // printf("ret = %d\n", ret);
+    // printf("AFTER LOOP\n");
     (env->scan.current == SPING) ? pcap_close(env->l_target->p_handle) : pcap_close(env->l_target->s_handle);
-    printf("AFTER CLOSE\n");
+    // printf("AFTER CLOSE\n");
 
-    pthread_mutex_lock(&env->sniffer_lock);
-    env->sniffer_end = TRUE;
-    pthread_mutex_unlock(&env->sniffer_lock);
-
+    // pthread_mutex_lock(&env->sniffer_lock);
+    // env->sniffer_end = TRUE;
+    // pthread_mutex_unlock(&env->sniffer_lock);
+    setSnifferState(env, &env->sniffer_end, TRUE);
     return ((void *)0);
 }

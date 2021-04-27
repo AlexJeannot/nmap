@@ -50,10 +50,6 @@ typedef struct  s_interface {
     char        s_ip[INET_ADDRSTRLEN];
 }               t_interface;
 
-typedef struct s_sig_info {
-    pcap_t *handle;
-}   t_sig_info;
-
 typedef struct  s_checksum
 {
     in_addr_t       s_addr;
@@ -79,12 +75,8 @@ typedef struct s_target
 }   t_target;
 
 typedef struct s_ping {
-    long double ts_start;
-    long double ts_end;
-    pthread_mutex_t lock;
     uint8_t     imcp_r;
     uint8_t     tcp_r;
-    pcap_t *handle;
 }   t_ping;
 
 typedef struct  s_result {
@@ -135,6 +127,15 @@ typedef struct s_probe_info
     uint8_t         is_thread;
 }               t_probe_info;
 
+typedef struct s_stats
+{
+    long double g_start;
+    long double g_end;
+    long double s_start;
+    long double s_end;
+}               t_stats;
+
+
 typedef struct s_env {
 
     t_port      port;
@@ -145,7 +146,7 @@ typedef struct s_env {
     t_thread    thread;
 
 
-
+    t_stats     stats;
 
     char        test[10];
     t_ping      ping;
@@ -159,9 +160,8 @@ typedef struct s_env {
     uint8_t sniffer_ready;
     uint8_t sniffer_end;
     pcap_t *handle;
+    pthread_mutex_t display_lock;
 } t_env;
-
-t_sig_info siginfo;
 
 void *packetSniffer(void *input);
 void parseArgs(t_env *env, t_target **all_target, int argc, char **argv);
@@ -213,9 +213,10 @@ int8_t isHostUp(const t_env *env);
 /*
 ** DISPLAY.C
 */
-int8_t displayHostUp(const t_env *env);
-int8_t displayHostDown(const t_env *env);
-void displayResults(const t_env *env);
+int8_t displayHostUp(t_env *env);
+int8_t displayHostDown(t_env *env);
+void displayResults(t_env *env);
+void displayGLobalDuration(t_env *env);
 
 /*
 ** THREAD.C
@@ -223,7 +224,6 @@ void displayResults(const t_env *env);
 int8_t  isThreadAvailable(t_env *env);
 void decrementThreadPool(t_env *env);
 void incrementThreadPool(t_env *env);
-void sendDatagramByThread(t_probe_info info);
-void sendSegmentByThread(t_probe_info info);
+void setSnifferState(t_env *env, uint8_t *sniffer, uint8_t state);
 
 #endif

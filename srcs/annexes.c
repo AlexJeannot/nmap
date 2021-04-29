@@ -18,16 +18,20 @@ void setDefaultPortState(t_env *env)
 
 /*
 **  Init variables as first step of the program
+**  Save pointer to env structure because may need it for freeing resources if error exit in a thread
+**  Save pointer to sig_env structure (global) because may need it for freeing resources if exit due to a signal
+**  Verify user rights
 **  Number of host down must be on the heap because could be shared between threads
 **  Init mutex to access thread information (number/incrementation/decrementation)
 **  Init mutex to display ping result
 **  Init mutex to orchestrate thread communication and timing
-**  Save pointer to env structure because may need it for freeing resources if error exit in a thread
 */
 void initProgram(t_env *env)
 {
     bzero(env, sizeof(t_env));
     env->main_env = env;
+    sig_env = env;
+    isUserRoot(env);
     env->stats.g_start = get_ts_ms();
     setDefaultPortState(env);
     
@@ -38,6 +42,7 @@ void initProgram(t_env *env)
     pthread_mutex_init(&env->thread.lock, NULL);
     pthread_mutex_init(&env->display_lock, NULL);
     pthread_mutex_init(&env->sniffer.lock, NULL);
+    setSignalHandler(env);
 }
 
 /*

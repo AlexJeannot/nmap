@@ -30,6 +30,5 @@ int main(int argc, char **argv)
         execWithoutThreads(&env);
     displayConclusion(&env);
     clearResources(&env, NULL);
-
     return (0);
 }

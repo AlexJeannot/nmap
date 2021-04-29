@@ -8,6 +8,7 @@
 # include <ctype.h>
 # include <poll.h>
 # include <pthread.h>
+# include <signal.h>
 
 # include <net/ethernet.h>
 # include <netinet/in.h>
@@ -157,11 +158,14 @@ typedef struct  s_env
     struct s_env    *main_env;
 }                   t_env;
 
+t_env *sig_env;
+
 void *packetSniffer(void *input);
 void parseArgs(t_env *env, int argc, char **argv);
 void	errorMsgExit(t_env *env, char *option, char *arg);
 long double	get_ts_ms(void);
 void waitForReponse(t_env *env);
+void setSignalHandler(t_env *env);
 
 /*
 ** TCP.C
@@ -234,6 +238,7 @@ int16_t  isPortFromScan(const t_env *env, uint16_t port);
 int8_t  isHostUnreachable(struct icmp *icmp_hdr);
 uint8_t isHostDuplicate(t_env *env, struct hostent *host);
 int8_t isOption(t_env *env, char *arg);
+void    isUserRoot(t_env *env);
 
 /*
 ** DISPLAY.C

@@ -14,7 +14,7 @@ DSRCS		= ./srcs/
 DOBJS	= ./comp/
 
 # SOURCES
-SRCS =	parse.c nmap.c exit.c sniffer.c tcp.c icmp.c network.c control.c display.c udp.c thread.c ping.c time.c exec.c scan.c annexes.c
+SRCS =	parse.c nmap.c exit.c sniffer.c tcp.c icmp.c network.c control.c display.c udp.c thread.c ping.c time.c exec.c scan.c annexes.c signal.c
 
 # OBJS
 OBJS 	= $(SRCS:%.c=$(DOBJS)%.o)  

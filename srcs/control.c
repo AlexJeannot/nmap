@@ -63,3 +63,12 @@ int8_t isOption(t_env *env, char *arg)
     }
     return (TRUE);
 }
+
+/*
+**  Verify if user has root right (RAW SOCKET creation)
+*/
+void    isUserRoot(t_env *env)
+{
+	if (getuid() != 0)
+        errorMsgExit(env, "user right", "user is not root");
+}

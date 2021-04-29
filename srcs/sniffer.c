@@ -43,7 +43,7 @@ void setFilter(t_env *env)
     char filter[4096];
     pcap_t **handle;
 
-    handle = (env->scan.current == SPING) ? &env->target.list->p_handle : &env->target.list->s_handle;
+    handle = (env->scan.current == SPING) ? &env->sniffer.p_handle : &env->sniffer.s_handle;
     if (env->scan.current == SPING) {
         sprintf(&filter[0], "src host %s && (tcp src port 80 || icmp[icmptype] == icmp-echoreply)", env->target.list->s_ip);
     }
@@ -82,7 +82,7 @@ void setupCapture(t_env *env)
     pcap_t **handle;
 
     timer = (env->scan.current == SPING) ? 1000 : 100;
-    handle = (env->scan.current == SPING) ? &env->target.list->p_handle : &env->target.list->s_handle;
+    handle = (env->scan.current == SPING) ? &env->sniffer.p_handle : &env->sniffer.s_handle;
     if (pcap_findalldevs(&dlist, errbuf) == -1)
         errorMsgExit(env, "pcap device list", errbuf);
 
@@ -118,15 +118,15 @@ void *packetSniffer(void *input)
 
     setSnifferState(env, &env->sniffer.ready, TRUE);
     if (env->scan.current == SPING)
-        ret = pcap_dispatch(env->target.list->p_handle, -1, packetHandler, (void *)env);
+        ret = pcap_dispatch(env->sniffer.p_handle, -1, packetHandler, (void *)env);
     else
-        while ((ret = pcap_dispatch(env->target.list->s_handle, 0, packetHandler, (void *)env)) != -2) ;
+        while ((ret = pcap_dispatch(env->sniffer.s_handle, 0, packetHandler, (void *)env)) != -2) ;
 
-    (env->scan.current == SPING) ? pcap_close(env->target.list->p_handle) : pcap_close(env->target.list->s_handle);
+    (env->scan.current == SPING) ? pcap_close(env->sniffer.p_handle) : pcap_close(env->sniffer.s_handle);
     if (env->scan.current == SPING)
-        env->target.list->p_handle = NULL;
+        env->sniffer.p_handle = NULL;
     else
-        env->target.list->s_handle = NULL;
+        env->sniffer.s_handle = NULL;
     setSnifferState(env, &env->sniffer.end, TRUE);
 
     return ((void *)0);

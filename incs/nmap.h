@@ -45,34 +45,33 @@
 # define CLOSED     0x3
 # define OPEN_FILT  0x4
 
-typedef struct  s_interface {
+typedef struct  s_interface
+{
     in_addr_t   n_ip;
     char        s_ip[INET_ADDRSTRLEN];
 }               t_interface;
 
 typedef struct  s_checksum
 {
-    in_addr_t       s_addr;
-    in_addr_t       t_addr;
-    uint8_t         pad;
-    uint8_t         type;
-    uint16_t        length;
+    in_addr_t           s_addr;
+    in_addr_t           t_addr;
+    uint8_t             pad;
+    uint8_t             type;
+    uint16_t            length;
     union {
         struct tcphdr   tcp;
         struct udphdr   udp;
     }   hdr;
-}       t_checksum;
+}               t_checksum;
 
-typedef struct s_list_target
+typedef struct  s_list_target
 {
-    in_addr_t       ip;
-    char            s_ip[INET_ADDRSTRLEN];
-    char            s_host[256];
-    struct sockaddr n_ip;
-    pcap_t *p_handle;
-    pcap_t *s_handle;
-    struct s_list_target *next;
-}   t_list_target;
+    in_addr_t               ip;
+    struct sockaddr         n_ip;
+    char                    s_ip[INET_ADDRSTRLEN];
+    char                    s_host[256];
+    struct s_list_target    *next;
+}               t_list_target;
 
 typedef struct s_target
 {
@@ -81,12 +80,14 @@ typedef struct s_target
     uint64_t        nb;
 }   t_target;
 
-typedef struct s_ping {
+typedef struct  s_ping
+{
     uint8_t     imcp_r;
     uint8_t     tcp_r;
-}   t_ping;
+}               t_ping;
 
-typedef struct  s_result {
+typedef struct  s_result
+{
     uint16_t    syn     :2;
     uint16_t    ack     :2;
     uint16_t    fin     :3;
@@ -95,13 +96,12 @@ typedef struct  s_result {
     uint16_t    udp     :3;
 }               t_result;
 
-typedef struct  s_port {
+typedef struct  s_port
+{
     uint16_t    nb;
     uint16_t    list[1024];
     t_result    result[1024];
-
-    pthread_mutex_t lock;
-
+    // pthread_mutex_t lock;
 }               t_port;
 
 typedef struct  s_socket
@@ -111,29 +111,19 @@ typedef struct  s_socket
     int32_t     udp;
 }               t_socket;
 
-typedef struct s_scan {
-    uint8_t all;
-    uint8_t current;
+typedef struct  s_scan {
+    uint8_t     all;
+    uint8_t     current;
 }               t_scan;
 
-typedef struct s_thread
+typedef struct  s_thread
 {
     pthread_mutex_t lock;
     uint8_t         *nb;
     uint8_t         on;
 }               t_thread;
 
-typedef struct s_probe_info
-{
-    in_addr_t       intf_ip;
-    struct sockaddr target;
-    int32_t         sock;
-    uint16_t        port;
-    uint8_t         type;
-    uint8_t         is_thread;
-}               t_probe_info;
-
-typedef struct s_stats
+typedef struct  s_stats
 {
     long double g_start;
     long double g_end;
@@ -142,44 +132,30 @@ typedef struct s_stats
     uint64_t    *host_down;
 }               t_stats;
 
-typedef struct s_sniffer
+typedef struct  s_sniffer
 {
-    pthread_t   id;
-    pthread_mutex_t lock;
-    uint8_t ready;
-    uint8_t end;
-
+    pcap_t              *p_handle;
+    pcap_t              *s_handle;
+    pthread_t           id;
+    pthread_mutex_t     lock;
+    uint8_t             ready;
+    uint8_t             end;
 }               t_sniffer;
 
-typedef struct s_env {
-
-    t_port      port;
-    t_target    target;
-    t_thread    thread;
-    t_stats     stats;
-    t_ping      ping;
-    t_scan      scan;
-    t_interface intf;
-    t_socket    sock;
-    t_sniffer   sniffer;
-
-
-
-
-    // pthread_t   sniffer_id;
-    // pthread_mutex_t sniffer_lock;
-    // uint8_t sniffer_ready;
-    // uint8_t sniffer_end;
-
-
-
-    pcap_t *handle;
+typedef struct  s_env
+{
+    t_interface     intf;
+    t_socket        sock;
+    t_target        target;
+    t_port          port;
+    t_thread        thread;
+    t_sniffer       sniffer;
+    t_ping          ping;
+    t_scan          scan;
+    t_stats         stats;
     pthread_mutex_t display_lock;
-
-
-    
-    struct s_env *main_env;
-} t_env;
+    struct s_env    *main_env;
+}                   t_env;
 
 void *packetSniffer(void *input);
 void parseArgs(t_env *env, int argc, char **argv);
@@ -243,8 +219,6 @@ void setTargetPort(struct sockaddr *target, uint16_t port);
 uint16_t getEncapDataOffset(const u_char *packet);
 void getSourceIP(t_env *env);
 
-void setProbeInfo(t_env *env, t_probe_info *info, uint8_t type);
-void setProbePort(t_probe_info *info, uint16_t port);
 
 int8_t getPortIndex(t_env *env);
 int16_t setPortIndex(t_env *env);

@@ -1,23 +1,40 @@
 #include "../incs/nmap.h"
 
+/*
+**  Create socket for network communication
+**  ICMP for ping purpose
+**  TCP for ping and scan purpose
+**  UDP for scan purpose (if UDP scan type requested)
+*/
 void createSocket(t_env *env)
 {
     if ((env->sock.icmp = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-        errorMsgExit("ICMP socket", "socket() call failed");
+        errorMsgExit(env, "ICMP socket", "socket() call failed");
     if ((env->sock.tcp = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
-        errorMsgExit("TCP socket", "socket() call failed");
+        errorMsgExit(env, "TCP socket", "socket() call failed");
 
     if (env->scan.all & SUDP) {
         if ((env->sock.udp = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) < 0)
-            errorMsgExit("UDP socket", "socket() call failed");
+            errorMsgExit(env, "UDP socket", "socket() call failed");
     }
 }   
 
+/*
+**  Set target port in sockaddr structure before sendto()
+*/
 void setTargetPort(struct sockaddr *target, uint16_t port)
 {
     ((struct sockaddr_in *)target)->sin_port = htons(port);
 }
 
+/*
+**  Get source IP for IP packet production
+**  Get all interfaces
+**  If AF_INET
+**  -- If not localhost
+**  --- Copy adress in env structure
+**  Free interfaces list
+*/
 void getSourceIP(t_env *env)
 {
     struct ifaddrs      *intf;
@@ -25,7 +42,7 @@ void getSourceIP(t_env *env)
     char                ip[INET_ADDRSTRLEN];
 
     if (getifaddrs(&intf) == -1)
-        errorMsgExit("interface", "cannot get machine interface(s)");
+        errorMsgExit(env, "interface", "cannot get machine interface(s)");
     for (struct ifaddrs *tmp = intf; tmp != NULL; tmp = tmp->ifa_next) {
         addr = (struct sockaddr_in *)tmp->ifa_addr;
         if (addr->sin_family == AF_INET) {
@@ -34,6 +51,7 @@ void getSourceIP(t_env *env)
                 if (strncmp(&ip[0], "127", 3)) {
                     strncpy(&env->intf.s_ip[0], &ip[0], INET_ADDRSTRLEN);
                     memcpy(&env->intf.n_ip, &addr->sin_addr, sizeof(in_addr_t));
+                    freeifaddrs(intf);
                     return ;
                 }
             }
@@ -42,25 +60,28 @@ void getSourceIP(t_env *env)
     freeifaddrs(intf);
 }
 
-void setProbeInfo(t_env *env, t_probe_info *info, uint8_t type)
+/*
+**  Get offset of packet that cause an ICMP reply
+**  Add Ethernet frame header length
+**  Add IP header length + ICMP header length
+**  Add IP header length
+*/
+uint16_t getEncapDataOffset(const u_char *packet)
 {
-    bzero(info, sizeof(t_probe_info));
-    memcpy(&info->intf_ip, &env->intf.n_ip, sizeof(in_addr_t));
-    memcpy(&info->target, &env->l_target->n_ip, sizeof(struct sockaddr));
-    memcpy(&info->type, &type, sizeof(uint8_t));
+    struct ip   *ip_hdr;
+    uint16_t    offset;
 
-    if (type == SUDP)
-        memcpy(&info->sock, &env->sock.udp, sizeof(int32_t));
-    else
-        memcpy(&info->sock, &env->sock.tcp, sizeof(int32_t));
+    offset = ETHHDR_LEN;
+    ip_hdr = (struct ip *)&packet[offset];
+    offset += (ip_hdr->ip_hl * 4) + ICMP_MINLEN;
+    ip_hdr = (struct ip *)&packet[offset];
+    offset += (ip_hdr->ip_hl * 4);
+    return (offset);
 }
 
-void setProbePort(t_probe_info *info, uint16_t port)
-{
-    memcpy(&info->port, &port, sizeof(uint16_t));
-    ((struct sockaddr_in *)&info->target)->sin_port = htons(port);
-}
-
+/*
+**  Get min port of target port range
+*/
 uint16_t getMinPort(const t_env *env)
 {
     uint16_t    min;
@@ -73,6 +94,9 @@ uint16_t getMinPort(const t_env *env)
     return (min);
 }
 
+/*
+**  Get max port of target port range
+*/
 uint16_t getMaxPort(const t_env *env)
 {
     uint16_t    max;
@@ -84,27 +108,6 @@ uint16_t getMaxPort(const t_env *env)
     }
     return (max);
 }
-
-// int8_t getPortIndex(t_env *env)
-// {
-//     uint8_t res;
-
-//     pthread_mutex_lock(&env->port.lock);
-//     res = (env->port.index < env->port.nb) ? TRUE : FALSE;
-//     pthread_mutex_unlock(&env->port.lock);
-//     return (res);
-// }
-
-// int16_t setPortIndex(t_env *env)
-// {
-//     int16_t res;
-
-//     pthread_mutex_lock(&env->port.lock);
-//     res = (env->port.index < env->port.nb) ? env->port.index : -1;
-//     env->port.index++;
-//     pthread_mutex_unlock(&env->port.lock);
-//     return (res);
-// }
 
 /*
  * Checksum calculation

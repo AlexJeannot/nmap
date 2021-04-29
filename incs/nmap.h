@@ -63,15 +63,22 @@ typedef struct  s_checksum
     }   hdr;
 }       t_checksum;
 
-typedef struct s_target
+typedef struct s_list_target
 {
     in_addr_t       ip;
     char            s_ip[INET_ADDRSTRLEN];
     char            s_host[256];
     struct sockaddr n_ip;
-    struct s_target *next;
     pcap_t *p_handle;
     pcap_t *s_handle;
+    struct s_list_target *next;
+}   t_list_target;
+
+typedef struct s_target
+{
+    t_list_target   *list;
+    t_list_target   *start;
+    uint64_t        nb;
 }   t_target;
 
 typedef struct s_ping {
@@ -94,7 +101,6 @@ typedef struct  s_port {
     t_result    result[1024];
 
     pthread_mutex_t lock;
-    // uint16_t    index;
 
 }               t_port;
 
@@ -133,67 +139,108 @@ typedef struct s_stats
     long double g_end;
     long double s_start;
     long double s_end;
+    uint64_t    *host_down;
 }               t_stats;
 
+typedef struct s_sniffer
+{
+    pthread_t   id;
+    pthread_mutex_t lock;
+    uint8_t ready;
+    uint8_t end;
+
+}               t_sniffer;
 
 typedef struct s_env {
 
     t_port      port;
-    t_target    *l_target;
-    uint64_t    nb_target;
-
-    // uint8_t     thread_nb;
+    t_target    target;
     t_thread    thread;
-
-
     t_stats     stats;
-
-    char        test[10];
     t_ping      ping;
-
     t_scan      scan;
-
     t_interface intf;
     t_socket    sock;
-    pthread_t   sniffer_id;
-    pthread_mutex_t sniffer_lock;
-    uint8_t sniffer_ready;
-    uint8_t sniffer_end;
+    t_sniffer   sniffer;
+
+
+
+
+    // pthread_t   sniffer_id;
+    // pthread_mutex_t sniffer_lock;
+    // uint8_t sniffer_ready;
+    // uint8_t sniffer_end;
+
+
+
     pcap_t *handle;
     pthread_mutex_t display_lock;
+
+
+    
+    struct s_env *main_env;
 } t_env;
 
 void *packetSniffer(void *input);
-void parseArgs(t_env *env, t_target **all_target, int argc, char **argv);
-void	errorMsgExit(char *option, char *arg);
+void parseArgs(t_env *env, int argc, char **argv);
+void	errorMsgExit(t_env *env, char *option, char *arg);
 long double	get_ts_ms(void);
-// void waitForReponse(pthread_t id);
 void waitForReponse(t_env *env);
-void waitForReponse_thread(t_env *main_env, t_env *all_env);
 
 /*
 ** TCP.C
 */
+void handleResponse_TCP(t_env *env, struct tcphdr *hdr);
 void setHeader_TCP(t_env *env, struct tcphdr *header, uint16_t port);
 void sendSegment(t_env *env);
-// void sendAllSegment(t_env *env);
+
+/*
+**  PING.C
+*/
+void handleResponse_ping(t_env *env, struct ip *hdr);
+int8_t pingTarget(t_env *env);
 
 /*
 ** UDP.C
 */
+void handleReponse_UDP(t_env *env, struct udphdr *hdr);
 void sendDatagram(t_env *env);
-// void sendAllDatagram(t_env *env);
 
 /*
 ** ICMP.C
 */
+void handleResponse_ICMP(t_env *env, const u_char *packet, struct icmp *icmp_hdr);
 void setHeader_ICMP(struct icmp *header);
+
+/*
+** TIME.C
+*/
+long double	get_ts_ms(void);
+void waitForSniffer(t_env *env);
+void waitForEndSniffer(t_env *env);
+void waitForReponse(t_env *env);
+void waitForPingReponse(t_env *env);
+void waitForSender(pthread_t *ids, uint64_t target_nb);
+
+/*
+** EXEC.C
+*/
+void execWithoutThreads(t_env *env);
+void execWithThreads(t_env *main_env);
+
+/*
+** SCAN.C
+*/
+void scanTarget(t_env *env);
+void *execScan(void *input);
+
 
 /*
 ** NETWORK.C
 */
 void createSocket(t_env *env);
 void setTargetPort(struct sockaddr *target, uint16_t port);
+uint16_t getEncapDataOffset(const u_char *packet);
 void getSourceIP(t_env *env);
 
 void setProbeInfo(t_env *env, t_probe_info *info, uint8_t type);
@@ -209,14 +256,20 @@ uint16_t getMinPort(const t_env *env);
 ** CONTROL.C
 */
 int8_t isHostUp(const t_env *env);
+int16_t  isPortFromScan(const t_env *env, uint16_t port);
+int8_t  isHostUnreachable(struct icmp *icmp_hdr);
+uint8_t isHostDuplicate(t_env *env, struct hostent *host);
+int8_t isOption(t_env *env, char *arg);
 
 /*
 ** DISPLAY.C
 */
+void displayHelp(t_env *env, int code);
 int8_t displayHostUp(t_env *env);
 int8_t displayHostDown(t_env *env);
 void displayResults(t_env *env);
-void displayGLobalDuration(t_env *env);
+void displayConclusion(t_env *env);
+void displayIntroduction(t_env *env);
 
 /*
 ** THREAD.C
@@ -225,5 +278,25 @@ int8_t  isThreadAvailable(t_env *env);
 void decrementThreadPool(t_env *env);
 void incrementThreadPool(t_env *env);
 void setSnifferState(t_env *env, uint8_t *sniffer, uint8_t state);
+
+/*
+** ANNEXES.C
+*/
+void setDefaultPortState(t_env *env);
+void initProgram(t_env *env);
+void setDefautParams(t_env *env);
+void sortPort(t_env *env);
+
+/*
+** PARSE.C
+*/
+uint32_t addPortRange(t_env *env, char *input, int32_t fport, int32_t sport);
+void parseScan(t_env *env, char *input);
+
+/*
+** EXIT.C
+*/
+void clearResources(t_env *env, char *error);
+
 
 #endif

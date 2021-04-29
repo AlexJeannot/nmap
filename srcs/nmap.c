@@ -16,7 +16,7 @@
 */
 int main(int argc, char **argv)
 {
-    t_env       env;
+    t_env   env;
 
     initProgram(&env);
     parseArgs(&env, argc, argv);

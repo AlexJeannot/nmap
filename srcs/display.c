@@ -3,7 +3,7 @@
 /*
 **  Display user manual if requested (--help), bad option or bad option value
 */
-void displayHelp(t_env *env, int code)
+void    displayHelp(t_env *env, int code)
 {
     printf("User manual:\n");
     printf("ft_nmap [OPTIONS]\n");
@@ -21,7 +21,7 @@ void displayHelp(t_env *env, int code)
 **  Display that the target is up
 **  Mutex for multithreading issue
 */
-int8_t displayHostUp(t_env *env)
+int8_t  displayHostUp(t_env *env)
 {
     pthread_mutex_lock(&env->display_lock);
     printf("Host: %s [%s] is up\n", env->target.list->s_ip, env->target.list->s_host);
@@ -33,7 +33,7 @@ int8_t displayHostUp(t_env *env)
 **  Display that the target is down
 **  Mutex for multithreading issue
 */
-int8_t displayHostDown(t_env *env)
+int8_t  displayHostDown(t_env *env)
 {
     pthread_mutex_lock(&env->display_lock);
     *env->stats.host_down += 1;
@@ -45,9 +45,9 @@ int8_t displayHostDown(t_env *env)
 /*
 **  Display conclusion
 */
-void displayConclusion(t_env *env)
+void    displayConclusion(t_env *env)
 {
-    env->stats.g_end = get_ts_ms();
+    env->stats.g_end = getTsMs();
     printf("ft_nmap done: %llu IP adress(es) (%llu host(s) up)", env->target.nb, (env->target.nb - *env->stats.host_down));
     printf(" scanned in %.1LF seconds\n", ((env->stats.g_end - env->stats.g_start) / 1000));
 }
@@ -55,9 +55,9 @@ void displayConclusion(t_env *env)
 /*
 **  Display scan type for introduction
 */
-void printScanType(uint8_t all_scans)
+void    printScanType(uint8_t all_scans)
 {
-    uint8_t     sep;
+    uint8_t sep;
 
     sep = FALSE;
     for (uint8_t type = 1; type <= SUDP; type <<= 1) {
@@ -79,7 +79,7 @@ void printScanType(uint8_t all_scans)
 /*
 **  Display introduction
 */
-void displayIntroduction(t_env *env)
+void    displayIntroduction(t_env *env)
 {
     printf("Scan configurations\n");
     printf("Number of target(s): %llu\n", env->target.nb);
@@ -94,7 +94,7 @@ void displayIntroduction(t_env *env)
 /*
 **  Return port state and set color accordingly
 */
-char *getPortState(uint16_t flag, uint8_t type)
+char    *getPortState(uint16_t flag, uint8_t type)
 {
     if (type == SACK) {
         switch (flag) {
@@ -126,7 +126,7 @@ char *getPortState(uint16_t flag, uint8_t type)
 /*
 **  Display a certain number of space for alignment purpose 
 */
-void printSpace(uint8_t nspace)
+void    printSpace(uint8_t nspace)
 {
     fflush(stdout);
     for (uint8_t pos = 0; pos < nspace; pos++)
@@ -138,7 +138,7 @@ void printSpace(uint8_t nspace)
 */
 uint8_t printPortState(char *s_type, uint8_t nspace, uint16_t flag, uint8_t type)
 {
-    int ret;
+    int32_t ret;
 
     if (nspace)
         printf("  | ");
@@ -161,7 +161,7 @@ uint8_t printPortState(char *s_type, uint8_t nspace, uint16_t flag, uint8_t type
 /*
 **  Display port number
 */
-void printPort(uint16_t port)
+void    printPort(uint16_t port)
 {
     uint8_t res;
 
@@ -172,7 +172,7 @@ void printPort(uint16_t port)
 /*
 **  Display service
 */
-void printService(uint16_t port)
+void    printService(uint16_t port)
 {
     struct servent  *service;
     uint8_t         res;
@@ -197,9 +197,9 @@ void printService(uint16_t port)
 **  Verify for each scan type if requested by user
 **  If it is, then call function to display port state
 */
-void displayPortState(uint8_t all_scans, t_result port_res)
+void    displayPortState(uint8_t all_scans, t_result port_res)
 {
-    uint8_t     sep;
+    uint8_t sep;
 
     sep = FALSE;
     if (all_scans & SSYN)
@@ -219,7 +219,7 @@ void displayPortState(uint8_t all_scans, t_result port_res)
 /*
 **  Target informations
 */
-void printTargetInfo(t_env *env)
+void    printTargetInfo(t_env *env)
 {
     printf("Target: %s [%s]\n", env->target.list->s_ip, env->target.list->s_host);
     printf("Scan duration: %.1LF seconds\n", ((env->stats.s_end - env->stats.s_start) / 1000));
@@ -229,7 +229,7 @@ void printTargetInfo(t_env *env)
 /*
 **  Main function for displaying all information for a target scan
 */
-void displayResults(t_env *env)
+void    displayResults(t_env *env)
 {
     sortPort(env);
     printTargetInfo(env);

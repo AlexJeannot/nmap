@@ -16,7 +16,7 @@ int8_t  isThreadAvailable(t_env *env)
 /*
 **  Decrement 2 threads from thread pool
 */
-void decrementThreadPool(t_env *env)
+void    decrementThreadPool(t_env *env)
 {
     pthread_mutex_lock(&env->thread.lock);
     *(env->thread.nb) -= 2;
@@ -26,7 +26,7 @@ void decrementThreadPool(t_env *env)
 /*
 **  Increment 2 threads from thread pool
 */
-void incrementThreadPool(t_env *env)
+void    incrementThreadPool(t_env *env)
 {
     pthread_mutex_lock(&env->thread.lock);
     *(env->thread.nb) += 2;
@@ -36,7 +36,7 @@ void incrementThreadPool(t_env *env)
 /*
 **  Set sniffer state for multithread communication and timing
 */
-void setSnifferState(t_env *env, uint8_t *sniffer, uint8_t state)
+void    setSnifferState(t_env *env, uint8_t *sniffer, uint8_t state)
 {
     pthread_mutex_lock(&env->sniffer.lock);
     *sniffer = state;

@@ -9,7 +9,7 @@
 **  -- If current scan type is UDP then call UDP reply handler
 **  -- Else call TCP reply handler
 */
-void packetHandler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+void    packetHandler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
     t_env               *env;
     struct ether_header *eth_hdr;
     struct ip           *ip_hdr;
@@ -37,11 +37,11 @@ void packetHandler(u_char *args, const struct pcap_pkthdr *header, const u_char 
 **  Compile filter
 **  Set filter
 */
-void setFilter(t_env *env)
+void    setFilter(t_env *env)
 {
-    struct bpf_program fp;
-    char filter[4096];
-    pcap_t **handle;
+    struct bpf_program  fp;
+    char                filter[4096];
+    pcap_t              **handle;
 
     handle = (env->scan.current == SPING) ? &env->sniffer.p_handle : &env->sniffer.s_handle;
     if (env->scan.current == SPING) {
@@ -76,10 +76,10 @@ void setFilter(t_env *env)
 */
 void setupCapture(t_env *env)
 {
-    pcap_if_t *dlist;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    int32_t timer;
-    pcap_t **handle;
+    pcap_if_t   *dlist;
+    pcap_t      **handle;
+    char        errbuf[PCAP_ERRBUF_SIZE];
+    int32_t     timer;
 
     timer = (env->scan.current == SPING) ? 1000 : 100;
     handle = (env->scan.current == SPING) ? &env->sniffer.p_handle : &env->sniffer.s_handle;
@@ -109,8 +109,8 @@ void setupCapture(t_env *env)
 */
 void *packetSniffer(void *input)
 {
-    t_env *env;
-    int ret;
+    t_env   *env;
+    int32_t ret;
 
     env = (t_env *)input;
     (env->scan.current == SPING) ? setupCapture(env) : setupCapture(env);

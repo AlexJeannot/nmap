@@ -6,7 +6,7 @@
 **  TCP for ping and scan purpose
 **  UDP for scan purpose (if UDP scan type requested)
 */
-void createSocket(t_env *env)
+void        createSocket(t_env *env)
 {
     if ((env->sock.icmp = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
         errorMsgExit(env, "ICMP socket", "socket() call failed");
@@ -22,7 +22,7 @@ void createSocket(t_env *env)
 /*
 **  Set target port in sockaddr structure before sendto()
 */
-void setTargetPort(struct sockaddr *target, uint16_t port)
+void    setTargetPort(struct sockaddr *target, uint16_t port)
 {
     ((struct sockaddr_in *)target)->sin_port = htons(port);
 }
@@ -35,7 +35,7 @@ void setTargetPort(struct sockaddr *target, uint16_t port)
 **  --- Copy adress in env structure
 **  Free interfaces list
 */
-void getSourceIP(t_env *env)
+void        getSourceIP(t_env *env)
 {
     struct ifaddrs      *intf;
     struct sockaddr_in  *addr;
@@ -66,7 +66,7 @@ void getSourceIP(t_env *env)
 **  Add IP header length + ICMP header length
 **  Add IP header length
 */
-uint16_t getEncapDataOffset(const u_char *packet)
+uint16_t    getEncapDataOffset(const u_char *packet)
 {
     struct ip   *ip_hdr;
     uint16_t    offset;
@@ -82,7 +82,7 @@ uint16_t getEncapDataOffset(const u_char *packet)
 /*
 **  Get min port of target port range
 */
-uint16_t getMinPort(const t_env *env)
+uint16_t    getMinPort(const t_env *env)
 {
     uint16_t    min;
 
@@ -97,7 +97,7 @@ uint16_t getMinPort(const t_env *env)
 /*
 **  Get max port of target port range
 */
-uint16_t getMaxPort(const t_env *env)
+uint16_t    getMaxPort(const t_env *env)
 {
     uint16_t    max;
 
@@ -119,10 +119,10 @@ uint16_t getMaxPort(const t_env *env)
  * Add most significant byte and least significant byte
  * ones complement of checksum
 */ 
-uint16_t	calcul_checksum(void *data, int32_t size)
+uint16_t    calcul_checksum(void *data, int32_t size)
 {
-	uint64_t	checksum;
-	uint16_t	*addr;
+	uint64_t    checksum;
+	uint16_t    *addr;
 
 	checksum = 0;
 	addr = data;

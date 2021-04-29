@@ -3,14 +3,14 @@
 /*
 **  Return TRUE if host has reply on ICMP request or TCP syn packet
 */
-int8_t isHostUp(const t_env *env) {
+int8_t  isHostUp(const t_env *env) {
     return (env->ping.imcp_r || env->ping.tcp_r);
 }
 
 /*
 **  Return index of port if it is in port range
 */
-int16_t  isPortFromScan(const t_env *env, uint16_t port)
+int16_t isPortFromScan(const t_env *env, uint16_t port)
 {
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
         if (env->port.list[pos] == port)
@@ -24,8 +24,7 @@ int16_t  isPortFromScan(const t_env *env, uint16_t port)
 */
 int8_t  isHostUnreachable(struct icmp *icmp_hdr)
 {
-    u_char  type;
-    u_char  code;
+    u_char  type, code;
 
     type = icmp_hdr->icmp_type;
     code = icmp_hdr->icmp_code;
@@ -40,8 +39,8 @@ int8_t  isHostUnreachable(struct icmp *icmp_hdr)
 */
 uint8_t isHostDuplicate(t_env *env, struct hostent *host)
 {
-    t_list_target *tmp;
-    int ret;
+    t_list_target   *tmp;
+    int32_t         ret;
 
     tmp = env->target.list;
     while (tmp) {
@@ -55,7 +54,7 @@ uint8_t isHostDuplicate(t_env *env, struct hostent *host)
 /*
 **  Return TRUE if argument is an option (must start by '--')
 */
-int8_t isOption(t_env *env, char *arg)
+int8_t  isOption(t_env *env, char *arg)
 {
     if (strlen(arg) < 4 || arg[0] != '-' || arg[1] != '-') {
         printf("ft_nmap: invalid argument: %s\n", arg);

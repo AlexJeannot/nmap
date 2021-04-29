@@ -4,7 +4,7 @@
 **  Set the scan result if no response from target
 **  For each port provided
 */
-void setDefaultPortState(t_env *env)
+void    setDefaultPortState(t_env *env)
 {
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
         env->port.result[pos].syn = FILT;
@@ -26,14 +26,13 @@ void setDefaultPortState(t_env *env)
 **  Init mutex to display ping result
 **  Init mutex to orchestrate thread communication and timing
 */
-void initProgram(t_env *env)
+void    initProgram(t_env *env)
 {
     bzero(env, sizeof(t_env));
     env->main_env = env;
     sig_env = env;
     isUserRoot(env);
-    env->stats.g_start = get_ts_ms();
-    setDefaultPortState(env);
+    env->stats.g_start = getTsMs();
     
     if (!(env->stats.host_down = (uint64_t *)malloc(sizeof(uint64_t))))
         errorMsgExit(env, "malloc [Stats allocation]", "host down");
@@ -51,7 +50,7 @@ void initProgram(t_env *env)
 **  If no port range provided then 1-1024
 **  If no scan type provided then all
 */
-void setDefautParams(t_env *env)
+void    setDefautParams(t_env *env)
 {
     if (!(env->target.list))
         errorMsgExit(env, "ip address or hostname", "no target provided");
@@ -71,11 +70,10 @@ void setDefautParams(t_env *env)
 **  Sort port by number
 **  Must sort result accordingly
 */
-void sortPort(t_env *env)
+void    sortPort(t_env *env)
 {
-    uint16_t    tmp_port;
+    uint16_t    tmp_port, s_pos;
     t_result    tmp_res;
-    uint16_t    s_pos;
 
     s_pos = 0;
     for (uint16_t a_pos = 0; a_pos < env->port.nb; a_pos++) {

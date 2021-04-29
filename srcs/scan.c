@@ -13,9 +13,9 @@
 **  -- Wait for reply from target
 **  Get end timestamp for stats
 */
-void scanTarget(t_env *env)
+void    scanTarget(t_env *env)
 {
-    env->stats.s_start = get_ts_ms();
+    env->stats.s_start = getTsMs();
     for (uint8_t type = 1; type <= SUDP; type <<= 1) {
         if (env->scan.all & type) {
 
@@ -30,7 +30,7 @@ void scanTarget(t_env *env)
             waitForReponse(env);
         }
     }
-    env->stats.s_end = get_ts_ms();
+    env->stats.s_end = getTsMs();
 }
 
 /*
@@ -41,9 +41,9 @@ void scanTarget(t_env *env)
 **  If multithreading
 **  -- Increment thread available by 2
 */
-void *execScan(void *input)
+void    *execScan(void *input)
 {
-    t_env *env;
+    t_env   *env;
 
     env = (t_env *)input;
     if (pingTarget(env))

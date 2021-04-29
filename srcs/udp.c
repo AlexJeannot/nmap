@@ -5,7 +5,7 @@
 **  If port is not from port range then stop here
 **  Set port state on OPEN
 */
-void handleReponse_UDP(t_env *env, struct udphdr *hdr)
+void    handleReponse_UDP(t_env *env, struct udphdr *hdr)
 {
     int16_t index;
 
@@ -18,9 +18,9 @@ void handleReponse_UDP(t_env *env, struct udphdr *hdr)
 **  Set UDP header values
 **  For checksum need to add a preheader (see t_checksum structure in header file incs/nmap.h)
 */
-void setHeader_UDP(t_env *env, struct udphdr *hdr, uint16_t port)
+void    setHeader_UDP(t_env *env, struct udphdr *hdr, uint16_t port)
 {
-    t_checksum chk;
+    t_checksum  chk;
 
     bzero(&chk, sizeof(t_checksum));
     memcpy(&chk.s_addr, &env->intf.n_ip, sizeof(in_addr_t));
@@ -45,16 +45,16 @@ void setHeader_UDP(t_env *env, struct udphdr *hdr, uint16_t port)
 **  -- Sent segment to target
 **  -- Wait 1000ms accordingly to RFC IMCP reply timing
 */
-void sendDatagram(t_env *env)
+void    sendDatagram(t_env *env)
 {
-    struct udphdr udp_hdr;
-    char data[22];
+    struct udphdr   hdr;
+    char            data[22];
     
     bzero(&data[0], 22);
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
         setTargetPort(&env->target.list->n_ip, env->port.list[pos]);
-        setHeader_UDP(env, &udp_hdr, env->port.list[pos]);
-        memcpy(&data[0], &udp_hdr, sizeof(struct udphdr));
+        setHeader_UDP(env, &hdr, env->port.list[pos]);
+        memcpy(&data[0], &hdr, sizeof(struct udphdr));
         if (sendto(env->sock.udp, &data, 22, 0, &env->target.list->n_ip, sizeof(struct sockaddr)) < 0)
             errorMsgExit(env, "sendto() call", "UDP scan");
         usleep(1001000);

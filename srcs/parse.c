@@ -6,7 +6,7 @@
 /*
 **  Control if port is in 1-65535 range
 */
-void controlPort(t_env *env, char *input, int32_t port)
+void        controlPort(t_env *env, char *input, int32_t port)
 {
     if (port < 1 || port > 65535) {
         errorMsgExit(env, "--port [Wrong port number]", input);
@@ -21,7 +21,7 @@ void controlPort(t_env *env, char *input, int32_t port)
 **  Add port to array
 **  Increment port number
 */
-uint32_t addPort(t_env *env, char *input, int32_t port, uint8_t type)
+uint32_t    addPort(t_env *env, char *input, int32_t port, uint8_t type)
 {
     controlPort(env, input, port);
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
@@ -42,7 +42,7 @@ uint32_t addPort(t_env *env, char *input, int32_t port, uint8_t type)
 **  For each port in range
 **  -- Add port to array
 */
-uint32_t addPortRange(t_env *env, char *input, int32_t fport, int32_t sport)
+uint32_t    addPortRange(t_env *env, char *input, int32_t fport, int32_t sport)
 {
     uint8_t count;
 
@@ -64,7 +64,7 @@ uint32_t addPortRange(t_env *env, char *input, int32_t fport, int32_t sport)
 /*
 **  Control if port after separator (comma or middle dash)
 */
-void controlNextPort(t_env *env, char *input, char next_char)
+void        controlNextPort(t_env *env, char *input, char next_char)
 {
     if (!(next_char))
         errorMsgExit(env, "--ports [Wrong syntax]", input);
@@ -73,7 +73,7 @@ void controlNextPort(t_env *env, char *input, char next_char)
 /*
 **  Control if comma after middle dash
 */
-uint32_t controlAfterPortRange(t_env *env, char *input, char next_char)
+uint32_t    controlAfterPortRange(t_env *env, char *input, char next_char)
 {
 
     if (next_char && next_char != ',')
@@ -94,7 +94,7 @@ uint32_t controlAfterPortRange(t_env *env, char *input, char next_char)
 **  -- If NULL then add port and is end
 **  -- Else character not accepted and then exit here
 */
-void parsePorts(t_env *env, char *input)
+void        parsePorts(t_env *env, char *input)
 {
     uint32_t    fpos, spos;
 
@@ -138,11 +138,11 @@ void parsePorts(t_env *env, char *input)
 **  Do reverse DNS resolution
 **  Add target to target linked list
 */
-void addTarget(t_env *env, char *input)
+void        addTarget(t_env *env, char *input)
 {
-    t_list_target        *target, *tmp;
-    struct hostent  *host;
-    struct sockaddr_in addr;
+    t_list_target       *target, *tmp;
+    struct hostent      *host;
+    struct sockaddr_in  addr;
 
     if (!(host = gethostbyname(input)))
         errorMsgExit(env, "ip adress or hostname", input);
@@ -181,7 +181,7 @@ void addTarget(t_env *env, char *input)
 /*
 **  Parse argument from --ip option
 */
-void parseIP(t_env *env, char *input)
+void        parseIP(t_env *env, char *input)
 {
     if (!(input))
         errorMsgExit(env, "--ip", "No ip address provided");
@@ -195,11 +195,11 @@ void parseIP(t_env *env, char *input)
 **  Close file
 **  Free returned pointer
 */
-void parseFile(t_env *env, char *input)
+void        parseFile(t_env *env, char *input)
 {
-    FILE *file;
-    char *line;
-    size_t len;
+    FILE    *file;
+    char    *line;
+    size_t  len;
     ssize_t ret;
 
     if (!(input))
@@ -224,7 +224,7 @@ void parseFile(t_env *env, char *input)
 **  Parse argument from --speedup option
 **  Must be between 0 and 250
 */
-void parseThreads(t_env *env, char *input)
+void        parseThreads(t_env *env, char *input)
 {
     int32_t thread_nb;
 
@@ -232,6 +232,9 @@ void parseThreads(t_env *env, char *input)
         errorMsgExit(env, "malloc [Thread number allocation]", input);
     if (!(input))
         errorMsgExit(env, "--speedup", "No thread number provided");
+    for (uint64_t pos = 0; pos < strlen(input); pos++)
+        if (!(isdigit(input[pos])))
+            errorMsgExit(env, "--speedup [wrong value]", input);
     thread_nb = atoi(input);
     if (thread_nb < 0 || thread_nb > 250)
         errorMsgExit(env, "--speedup [Wrong number of threads]", input);
@@ -244,7 +247,7 @@ void parseThreads(t_env *env, char *input)
 /*
 **  Add scan type to uint8_t (for value of each scan type see header file incs/nmap.h)
 */
-void addScanType(t_env *env, char *input, uint8_t type)
+void        addScanType(t_env *env, char *input, uint8_t type)
 {
     if (env->scan.all & type)
         errorMsgExit(env, "--scan [Scan type repetition]", input);
@@ -256,7 +259,7 @@ void addScanType(t_env *env, char *input, uint8_t type)
 **  After a scan type next character must be nothing (end) or and '/'
 **  After a '/' there must be a character as well
 */
-uint8_t controlAfterScanType(t_env *env, char *input, char current_char, char next_char)
+uint8_t     controlAfterScanType(t_env *env, char *input, char current_char, char next_char)
 {
     if (current_char && current_char != '/')
         errorMsgExit(env, "--scan [Wrong syntax]", input);
@@ -271,7 +274,7 @@ uint8_t controlAfterScanType(t_env *env, char *input, char current_char, char ne
 **  Parse argument from --scan option
 **  Verify and add each scan type requested
 */
-void parseScan(t_env *env, char *input)
+void        parseScan(t_env *env, char *input)
 {
     uint32_t    fpos, spos, tpos;
     char        type[5];
@@ -309,7 +312,7 @@ void parseScan(t_env *env, char *input)
 **  Parse option requested and call a handling function accordingly
 **  Return FALSE if unknown argument
 */
-int8_t parseOption(t_env *env, char *arg, char *next_arg)
+int8_t      parseOption(t_env *env, char *arg, char *next_arg)
 {
     if (!(strncmp(arg, "help", 5)))
         displayHelp(env, 0);
@@ -336,7 +339,7 @@ int8_t parseOption(t_env *env, char *arg, char *next_arg)
 **  -- Verify if it is an known option
 **  Set defaut parameter for not provided argument(s)
 */
-void parseArgs(t_env *env, int argc, char **argv)
+void        parseArgs(t_env *env, int argc, char **argv)
 {
     int16_t pos;
 
@@ -354,4 +357,5 @@ void parseArgs(t_env *env, int argc, char **argv)
         pos += 2;
     }
     setDefautParams(env);
+    setDefaultPortState(env);
 }

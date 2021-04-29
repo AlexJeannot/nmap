@@ -9,7 +9,7 @@
 **  -- Clean ping result for next target
 **  -- Clean port state for next target
 */
-void execWithoutThreads(t_env *env)
+void    execWithoutThreads(t_env *env)
 {
     while (env->target.list) {
         execScan(env);
@@ -39,12 +39,12 @@ void execWithoutThreads(t_env *env)
 **  -- If target is up
 **  --- Display results
 */
-void execWithThreads(t_env *main_env)
+void    execWithThreads(t_env *main_env)
 {
 
-    t_env   env[main_env->target.nb];
-    pthread_t id[main_env->target.nb];
-    t_list_target    *tmp;
+    t_env           env[main_env->target.nb];
+    pthread_t       id[main_env->target.nb];
+    t_list_target   *tmp;
 
     bzero(&env[0], (sizeof(t_env) * main_env->target.nb));
     tmp = main_env->target.start;

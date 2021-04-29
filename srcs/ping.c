@@ -5,7 +5,7 @@
 **  Verify if it is an IMCP or TCP packet
 **  No need to do futher verification because filter has already been apply before (see sniffer.c file / setFilter() function)
 */
-void handleResponse_ping(t_env *env, struct ip *hdr)
+void    handleResponse_ping(t_env *env, struct ip *hdr)
 {
     if (hdr->ip_p == IPPROTO_ICMP || hdr->ip_p == IPPROTO_TCP) {
         switch (hdr->ip_p) {
@@ -28,7 +28,7 @@ void handleResponse_ping(t_env *env, struct ip *hdr)
 **  Wait for sniffer thread to finish (timeout is set as 1000ms in pcap_open_live())
 **  Display if host is up or down and return TRUE/FALSE accordingly
 */
-int8_t pingTarget(t_env *env)
+int8_t  pingTarget(t_env *env)
 {
     struct icmp     icmp_hdr;
     struct tcphdr   tcp_hdr;

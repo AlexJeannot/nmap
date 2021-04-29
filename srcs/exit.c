@@ -17,7 +17,7 @@ void	errorExit(t_env *env, char *error)
 */
 void	errorMsgExit(t_env *env, char *option, char *arg)
 {
-    char *error_msg;
+    char	*error_msg;
 
 	if (!(error_msg = (char *)malloc(sizeof(char) * (strlen(option) + strlen(arg) + 13))))
 		errorExit(env, "ft_nmap: invalid malloc [Error message allocation]");
@@ -29,7 +29,7 @@ void	errorMsgExit(t_env *env, char *option, char *arg)
 **	Clear resources allocated in program
 **	Memory and sockets
 */
-void clearResources(t_env *env, char *error)
+void	clearResources(t_env *env, char *error)
 {
 	t_list_target	*tmp;
 

@@ -3,7 +3,7 @@
 /*
  * Get time is millisecond
 */
-long double	get_ts_ms(void)
+long double getTsMs(void)
 {
 	struct	timeval tv;
 	struct	timezone tz;
@@ -18,7 +18,7 @@ long double	get_ts_ms(void)
 **  -- Check variable
 **  -- Sleep 100ms
 */
-void waitForSniffer(t_env *env)
+void        waitForSniffer(t_env *env)
 {
     while (1) {
         pthread_mutex_lock(&env->sniffer.lock);
@@ -37,7 +37,7 @@ void waitForSniffer(t_env *env)
 **  -- Check variable
 **  -- Sleep 100ms
 */
-void waitForEndSniffer(t_env *env)
+void        waitForEndSniffer(t_env *env)
 {
     while (1) {
         pthread_mutex_lock(&env->sniffer.lock);
@@ -57,7 +57,7 @@ void waitForEndSniffer(t_env *env)
 **  -- Breakloop sniffer
 **  -- Wait for sniffer to finish
 */
-void waitForReponse(t_env *env)
+void        waitForReponse(t_env *env)
 {
     usleep(1000000);
     pcap_breakloop(env->sniffer.s_handle);
@@ -68,7 +68,7 @@ void waitForReponse(t_env *env)
 **  Wait for all thread started
 **  Join each thread from the id array
 */
-void waitForSender(pthread_t *ids, uint64_t target_nb)
+void        waitForSender(pthread_t *ids, uint64_t target_nb)
 {
     for (uint64_t pos = 0; pos < target_nb; pos++) {
         pthread_join(ids[pos], NULL);

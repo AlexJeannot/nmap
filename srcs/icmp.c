@@ -16,7 +16,7 @@
 **  -- If ICMP reply is unreachable (type 3 && code 1/2/3/9/10/11)
 **  -- Set port state depending on scan type
 */
-void handleResponse_ICMP(t_env *env, const u_char *packet, struct icmp *icmp_hdr)
+void    handleResponse_ICMP(t_env *env, const u_char *packet, struct icmp *icmp_hdr)
 {
     struct tcphdr   *tcp_hdr = NULL;
     struct udphdr   *udp_hdr = NULL;
@@ -55,7 +55,7 @@ void handleResponse_ICMP(t_env *env, const u_char *packet, struct icmp *icmp_hdr
 **	Set ICMP header values
 **  ICMP echo request (type 8 / code 0)
 */
-void setHeader_ICMP(struct icmp *header)
+void    setHeader_ICMP(struct icmp *header)
 {
     bzero(header, sizeof(struct icmp));
 

@@ -5,9 +5,9 @@
 **  If port is not from port range then stop here
 **  Set port state depending on current scan type
 */
-void handleResponse_TCP(t_env *env, struct tcphdr *hdr)
+void    handleResponse_TCP(t_env *env, struct tcphdr *hdr)
 {
-    int16_t        index;
+    int16_t index;
 
     if ((index = isPortFromScan(env, ntohs(hdr->th_sport))) == -1 || ntohs(hdr->th_dport) != 44380)
         return ;
@@ -31,9 +31,9 @@ void handleResponse_TCP(t_env *env, struct tcphdr *hdr)
 **  Set TCP header values
 **  For checksum need to add a preheader (see t_checksum structure in header file incs/nmap.h)
 */
-void setHeader_TCP(t_env *env, struct tcphdr *hdr, uint16_t port)
+void    setHeader_TCP(t_env *env, struct tcphdr *hdr, uint16_t port)
 {
-    t_checksum chk;
+    t_checksum  chk;
 
     bzero(&chk, sizeof(t_checksum));
     memcpy(&chk.s_addr, &env->intf.n_ip, sizeof(in_addr_t));
@@ -70,9 +70,9 @@ void setHeader_TCP(t_env *env, struct tcphdr *hdr, uint16_t port)
 **  -- Set target port
 **  -- Sent segment to target
 */
-void sendSegment(t_env *env)
+void    sendSegment(t_env *env)
 {
-    struct tcphdr hdr;
+    struct tcphdr   hdr;
 
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
         setHeader_TCP(env, &hdr, env->port.list[pos]);

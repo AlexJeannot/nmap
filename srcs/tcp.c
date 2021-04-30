@@ -77,7 +77,11 @@ void    sendSegment(t_env *env)
     for (uint16_t pos = 0; pos < env->port.nb; pos++) {
         setHeader_TCP(env, &hdr, env->port.list[pos]);
         setTargetPort(&env->target.list->n_ip, env->port.list[pos]);
-        if (sendto(env->sock.tcp, &hdr, sizeof(struct tcphdr), 0, &env->target.list->n_ip, sizeof(struct sockaddr)) < 0)
+        if (sendto(env->sock.tcp, &hdr, sizeof(struct tcphdr), 0, &env->target.list->n_ip, sizeof(struct sockaddr)) < 0) {
+            perror("TCP SCAN");
             errorMsgExit(env, "sendto() call", "TCP scan");
+        }
+        if (pos && pos % 100 == 0)
+            usleep(100000);
     }
 }

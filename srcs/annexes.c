@@ -91,3 +91,66 @@ void    sortPort(t_env *env)
         }
     }
 }
+
+void	*ft_memset(void *s, int c, size_t n)
+{
+	unsigned char	*str;
+
+	str = (unsigned char *)s;
+	while (n > 0)
+	{
+		*str = (unsigned char)c;
+		str++;
+		n--;
+	}
+	return (s);
+}
+
+void	*ft_memcpy(void *dest, const void *src, size_t n)
+{
+	unsigned char	*destcpy;
+	unsigned char	*srccpy;
+	unsigned int	cmp;
+
+	cmp = 0;
+	destcpy = (unsigned char *)dest;
+	srccpy = (unsigned char *)src;
+	if (!n || destcpy == srccpy)
+		return (dest);
+	while (n > cmp)
+	{
+		destcpy[cmp] = srccpy[cmp];
+		cmp++;
+	}
+	return (dest);
+}
+
+size_t		ft_strlen(const char *s)
+{
+	unsigned int	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+size_t	ft_strlcpy(char *dest, const char *src, size_t size)
+{
+	unsigned int	i;
+	unsigned int	j;
+
+	if (!dest)
+		return (0);
+	i = 0;
+	j = ft_strlen(src);
+	if (!size)
+		return (j);
+	while (src[i] && i < size - 1)
+	{
+		dest[i] = src[i];
+		i++;
+	}
+	dest[i] = '\0';
+	return (j);
+}

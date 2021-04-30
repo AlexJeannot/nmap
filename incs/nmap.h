@@ -9,6 +9,7 @@
 # include <poll.h>
 # include <pthread.h>
 # include <signal.h>
+# include <string.h>
 
 # include <net/ethernet.h>
 # include <netinet/in.h>
@@ -335,6 +336,7 @@ void        waitForSniffer(t_env *env);
 void        waitForEndSniffer(t_env *env);
 void        waitForReponse(t_env *env);
 void        waitForSender(pthread_t *ids, uint64_t target_nb);
+void        waitForPing(t_env *env);
 
 /*
 ** UDP.C

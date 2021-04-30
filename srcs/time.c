@@ -60,8 +60,16 @@ void        waitForEndSniffer(t_env *env)
 void        waitForReponse(t_env *env)
 {
     usleep(1000000);
-    pcap_breakloop(env->sniffer.s_handle);
-    waitForEndSniffer(env);
+    pthread_cancel(env->sniffer.id);
+    pcap_close(env->sniffer.s_handle);
+}
+
+void        waitForPing(t_env *env)
+{
+    usleep(1000000);
+    pcap_close(env->sniffer.p_handle);
+    pthread_cancel(env->sniffer.id);
+    // pcap_close(env->sniffer.p_handle);
 }
 
 /*

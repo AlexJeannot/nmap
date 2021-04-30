@@ -46,8 +46,10 @@ void    *execScan(void *input)
     t_env   *env;
 
     env = (t_env *)input;
+    printf("AVANT PING\n");
     if (pingTarget(env))
         scanTarget(env);
+    printf("POST PING\n");
     if (env->thread.on)
         incrementThreadPool(env);
 

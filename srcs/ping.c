@@ -49,6 +49,6 @@ int8_t  pingTarget(t_env *env)
     if (sendto(env->sock.tcp, &tcp_hdr, sizeof(struct tcphdr), 0, &env->target.list->n_ip, sizeof(struct sockaddr)) < 0)
         errorMsgExit(env, "sendto() call", "TCP ping");
 
-    pthread_join(env->sniffer.id, NULL);
+    waitForPing(env);
     return ((isHostUp(env)) ? displayHostUp(env) : displayHostDown(env));
 }

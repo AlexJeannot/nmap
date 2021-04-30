@@ -48,7 +48,7 @@ int8_t  displayHostDown(t_env *env)
 void    displayConclusion(t_env *env)
 {
     env->stats.g_end = getTsMs();
-    printf("ft_nmap done: %llu IP adress(es) (%llu host(s) up)", env->target.nb, (env->target.nb - *env->stats.host_down));
+    printf("ft_nmap done: %lu IP adress(es) (%lu host(s) up)", env->target.nb, (env->target.nb - *env->stats.host_down));
     printf(" scanned in %.1LF seconds\n", ((env->stats.g_end - env->stats.g_start) / 1000));
 }
 
@@ -82,9 +82,12 @@ void    printScanType(uint8_t all_scans)
 void    displayIntroduction(t_env *env)
 {
     printf("Scan configurations\n");
-    printf("Number of target(s): %llu\n", env->target.nb);
+    printf("Number of target(s): %lu\n", env->target.nb);
     printf("Number of port(s): %u\n", env->port.nb);
-    printf("Number of thread(s): %u\n", *env->thread.nb);
+    if (env->thread.on)
+        printf("Number of thread(s): %u\n", *env->thread.nb);
+    else
+        printf("Number of thread(s): 0\n");
     printf("Scan type(s): ");
     printScanType(env->scan.all);
     printf("\n\n");

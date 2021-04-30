@@ -20,7 +20,7 @@ void    setSignalHandler(t_env *env)
 {
     struct sigaction    sig_action;
 
-    sig_action.__sigaction_u.__sa_handler = signalHandler;
+    sig_action.sa_handler = signalHandler;
     if (sigaction(SIGINT, &sig_action, NULL) == -1)
         errorMsgExit(env, "signal settings", "SIGINT handler");
     if (sigaction(SIGQUIT, &sig_action, NULL) == -1)

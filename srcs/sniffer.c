@@ -79,9 +79,9 @@ void setupCapture(t_env *env)
     pcap_if_t   *dlist;
     pcap_t      **handle;
     char        errbuf[PCAP_ERRBUF_SIZE];
-    int32_t     timer;
+    // int32_t     timer;
 
-    timer = (env->scan.current == SPING) ? 1000 : 100;
+    // timer = (env->scan.current == SPING) ? 1000 : 100;
     handle = (env->scan.current == SPING) ? &env->sniffer.p_handle : &env->sniffer.s_handle;
     if (pcap_findalldevs(&dlist, errbuf) == -1)
         errorMsgExit(env, "pcap device list", errbuf);
@@ -89,7 +89,7 @@ void setupCapture(t_env *env)
     if (!(dlist->name))
         errorMsgExit(env, "pcap device name", "no name found");
 
-    if (!(*handle = pcap_open_live(dlist->name, BUFSIZ, 1, timer, errbuf)))
+    if (!(*handle = pcap_open_live(dlist->name, BUFSIZ, 1, 100, errbuf)))
         errorMsgExit(env, "pcap device opening", errbuf);
 
     pcap_freealldevs(dlist);
@@ -110,7 +110,6 @@ void setupCapture(t_env *env)
 void *packetSniffer(void *input)
 {
     t_env   *env;
-    int32_t ret;
 
     env = (t_env *)input;
     (env->scan.current == SPING) ? setupCapture(env) : setupCapture(env);
@@ -118,11 +117,14 @@ void *packetSniffer(void *input)
 
     setSnifferState(env, &env->sniffer.ready, TRUE);
     if (env->scan.current == SPING)
-        ret = pcap_dispatch(env->sniffer.p_handle, -1, packetHandler, (void *)env);
+        while (1)
+            pcap_dispatch(env->sniffer.p_handle, -1, packetHandler, (void *)env);
     else
-        while ((ret = pcap_dispatch(env->sniffer.s_handle, 0, packetHandler, (void *)env)) != -2) ;
+        while (1)
+            pcap_dispatch(env->sniffer.s_handle, -1, packetHandler, (void *)env);
+    printf("POST DISPTACH\n");
 
-    (env->scan.current == SPING) ? pcap_close(env->sniffer.p_handle) : pcap_close(env->sniffer.s_handle);
+    // (env->scan.current == SPING) ? pcap_close(env->sniffer.p_handle) : pcap_close(env->sniffer.s_handle);
     if (env->scan.current == SPING)
         env->sniffer.p_handle = NULL;
     else

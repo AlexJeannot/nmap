@@ -45,7 +45,7 @@ all: $(NAME)
 
 # COMPILATION
 $(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(OBJS) -lpcap -o $(NAME)
+	$(CC) $(FLAGS) $(OBJS) -lpcap -lpthread -o $(NAME)
 	echo "$(GREEN)$(NAME) DONE ✔$(RESET)"
 
 

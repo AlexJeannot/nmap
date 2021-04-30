@@ -46,7 +46,7 @@ all: $(NAME)
 # COMPILATION
 $(NAME): $(OBJS)
 	$(CC) $(FLAGS) $(OBJS) -lpcap -lpthread -o $(NAME)
-	echo "$(GREEN)$(NAME) DONE ✔$(RESET)"
+	echo -e "$(GREEN)$(NAME) DONE ✔$(RESET)"
 
 
 $(OBJS): | $(DOBJS)

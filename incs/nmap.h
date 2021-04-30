@@ -219,7 +219,7 @@ typedef struct  s_checksum
 /*
 **  Pointer to main structure (only use in case of interruption signal)
 */
-t_env *sig_env;
+extern t_env *sig_env;
 
 void *packetSniffer(void *input);
 void parseArgs(t_env *env, int argc, char **argv);

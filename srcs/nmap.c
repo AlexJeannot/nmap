@@ -1,4 +1,5 @@
 #include "../incs/nmap.h"
+t_env *sig_env;
 
 /*
 **  Main program
